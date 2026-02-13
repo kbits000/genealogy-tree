@@ -1,6 +1,6 @@
 'use server'
 
-import { addNewIndividual } from "@/lib/_data_access/individuals";
+import { addNewIndividual, getAllIndividuals } from "@/lib/_data_access/individuals";
 import { redirect } from 'next/navigation'
 
 // TODO add input validation
@@ -24,4 +24,9 @@ export async function addNewIndividualServerAction(rawFormData: FormData) {
     if (result) {
         redirect(`/admin/individuals`)
     }
+}
+
+export async function getAllIndividualsServerAction() {
+    console.log('getAllIndividualsServerAction');
+    await getAllIndividuals();
 }

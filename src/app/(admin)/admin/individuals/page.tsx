@@ -1,4 +1,3 @@
-'use server'
 
 import IndividualsList from "@/components/admin_page/individuals_list";
 import AdminSidebar from "@/components/admin_page/admin_sidebar";
@@ -7,8 +6,10 @@ import AdminBreadcrumbs from "@/components/admin_page/admin_breadcrumbs";
 import Footer from "@/components/footer/Footer";
 import Link from "@/components/Link";
 import Button from '@mui/material/Button';
+import { getAllIndividuals } from "@/lib/_data_access/individuals";
 
 export default async function AdminIndividualsPage() {
+    const individuals = await getAllIndividuals();
 
     return (
         <div>
@@ -18,7 +19,7 @@ export default async function AdminIndividualsPage() {
                 <Button variant="contained" component={Link} href="/admin/individuals/add">
                     اضافة فرد
                 </Button>
-                <IndividualsList/>
+                <IndividualsList individuals={individuals}/>
             </Box>
             <Footer />
         </div>

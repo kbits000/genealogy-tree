@@ -29,7 +29,8 @@ export async function addNewIndividual(modifiedFormData: {
             sex: modifiedFormData['gender'],
             is_dead: modifiedFormData['is_dead'],
         });
-        return true;
+        const savesSuccessfully = await newIndividual.save();
+        return savesSuccessfully===newIndividual;
     } catch {
 
     }

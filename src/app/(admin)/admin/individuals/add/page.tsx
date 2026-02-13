@@ -14,11 +14,11 @@ import FormControl from '@mui/material/FormControl';
 import FormLabel from '@mui/material/FormLabel';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
-
+import SaveButton from "@/components/admin_page/save_button";
 
 export default async function IndividualsAddPage() {
     return (
-            <div>
+            <div dir='rtl'>
                 <AdminSidebar selectedButton={'Individuals'} />
                 <Box sx={{px:4, py: 0}}>
                     <AdminBreadcrumbs breadcrumbsList={[{text: 'المشرف', path: '/admin'}, {text: 'الافراد', path: '#'}]}/>
@@ -30,16 +30,16 @@ export default async function IndividualsAddPage() {
                                 direction={{ xs: 'column', sm: 'row' }}
                                 sx={{ flexWrap: 'wrap' }}
                             >
-                                <TextField required id="first_name" placeholder={"الأسم الاول"} variant="outlined" margin="normal" />
-                                <TextField id="parent_name" placeholder={"اسم الاب"} variant="outlined" margin="normal" />
-                                <TextField id="grandparent_name" placeholder={"اسم الجد"} variant="outlined" margin="normal" />
-                                <TextField id="last_name" placeholder={"الأسم الاخير"} variant="outlined" margin="normal" />
+                                <TextField required name="first_name_field" id="first_name" placeholder={"الأسم الاول"} variant="outlined" margin="normal" />
+                                <TextField name="parent_name_field" id="parent_name" placeholder={"اسم الاب"} variant="outlined" margin="normal" />
+                                <TextField name="grandparent_name_field" id="grandparent_name" placeholder={"اسم الجد"} variant="outlined" margin="normal" />
+                                <TextField name="last_name_field" id="last_name" placeholder={"الأسم الاخير"} variant="outlined" margin="normal" />
                                 <FormControl sx={{ mt: 2 }}>
-                                    <FormLabel id="demo-radio-buttons-group-label">الجنس</FormLabel>
+                                    <FormLabel id="gender-label">الجنس</FormLabel>
                                     <RadioGroup
-                                        aria-labelledby="demo-radio-buttons-group-label"
+                                        aria-labelledby="gender-label"
                                         defaultValue="غير معلوم"
-                                        name="radio-buttons-group"
+                                        name="gender_field"
                                         row
                                     >
                                         <FormControlLabel value="ذكر" control={<Radio />} label="ذكر" />
@@ -48,7 +48,13 @@ export default async function IndividualsAddPage() {
                                     </RadioGroup>
                                 </FormControl>
                             </Stack>
-                        <Button type={'submit'} variant="contained">حفظ</Button>
+                        <Button
+                            type={'submit'}
+                            variant="contained"
+                        >
+                            حفظ
+                        </Button>
+                        {/*<SaveButton />*/}
                     </Form>
                 </Box>
                 <Footer />

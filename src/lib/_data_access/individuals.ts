@@ -35,3 +35,19 @@ export async function addNewIndividual(modifiedFormData: {
 
     }
 }
+
+
+export async function getAllIndividuals() {
+    try {
+        await dbConnect();
+        const individuals = await IndividualModel.find({}).select('first_name parent_name grandparent_name last_name sex is_dead').lean();
+        return individuals.map(ind => ({
+            _id: String(ind._id),
+            first_name: ind.first_name,
+            sex: ind.sex,
+            is_dead: ind.is_dead,
+        }));
+    } catch {
+
+    }
+}

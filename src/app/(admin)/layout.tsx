@@ -12,12 +12,14 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="ar" dir="ltr">
-            <body>
-                <AppRouterCacheProvider options={{ enableCssLayer: true }}>
-                    {children}
-                </AppRouterCacheProvider>
-            </body>
-        </html>
+        // <html lang="ar" dir="rtl">
+        <dir lang="ar" dir="rtl">
+            {/*<body>*/}
+            <AppRouterCacheProvider options={{ enableCssLayer: true }}>
+                {children}
+            </AppRouterCacheProvider>
+            {/*</body>*/}
+        </dir>
+        // </html>
     );
 }

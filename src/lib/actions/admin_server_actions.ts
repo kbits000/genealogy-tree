@@ -1,6 +1,7 @@
 'use server'
 
 import { addNewIndividual } from "@/lib/_data_access/individuals";
+import { redirect } from 'next/navigation'
 
 // TODO add input validation
 export async function PrintStatement(rawFormData: FormData) {
@@ -19,5 +20,9 @@ export async function PrintStatement(rawFormData: FormData) {
     const isDead = modifiedFormData['is_dead']==='حي'? 'alive': modifiedFormData['is_dead']==='متوفى'? 'dead' : 'unknown';
     modifiedFormData['is_dead'] = isDead;
 
-    await addNewIndividual(modifiedFormData);
+    const result = await addNewIndividual(modifiedFormData);
+    console.log('result: ', result);
+    if (result) {
+        redirect(`/admin/individuals`)
+    }
 }

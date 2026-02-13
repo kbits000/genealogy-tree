@@ -16,7 +16,7 @@ export async function addNewIndividual(modifiedFormData: FormData) {
             sex: modifiedFormData['gender'],
             is_dead: modifiedFormData['is_dead'],
         });
-
+        return true;
     } catch {
 
     }

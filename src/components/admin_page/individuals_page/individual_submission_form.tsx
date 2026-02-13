@@ -10,14 +10,14 @@ import FormControl from '@mui/material/FormControl';
 import FormLabel from '@mui/material/FormLabel';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
-import {PrintStatement} from "@/lib/actions/admin_server_actions";
+import {addNewIndividualServerAction} from "@/lib/actions/admin_server_actions";
 
 // TODO implement input validation
 export default function IndividualSubmissionForm() {
     const [loading, setLoading] = useState(false);
 
     return (
-        <Form action={PrintStatement}>
+        <Form action={addNewIndividualServerAction}>
             <Stack
                 useFlexGap
                 spacing={{md:2}}

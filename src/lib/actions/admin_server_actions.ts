@@ -4,9 +4,8 @@ import { addNewIndividual } from "@/lib/_data_access/individuals";
 import { redirect } from 'next/navigation'
 
 // TODO add input validation
-export async function PrintStatement(rawFormData: FormData) {
-    console.log('PrintStatement');
-    console.log(rawFormData);
+export async function addNewIndividualServerAction(rawFormData: FormData) {
+
     const modifiedFormData = {
         first_name: rawFormData.get('first_name_field') as string,
         parent_name: rawFormData.get('parent_name_field') as string,

@@ -5,9 +5,22 @@ import {redirect} from "next/navigation";
 import IndividualModel from "@/lib/database_models/individuals_model";
 
 // TODO add input validation
-export async function addNewIndividual(modifiedFormData: FormData) {
+export async function addNewIndividual(modifiedFormData: {
+    first_name: string;
+    parent_name?: string;
+    grandparent_name?: string;
+    last_name?: string;
+    gender: string;
+    is_dead: string;
+}) {
 
     // const gender = modifiedFormData['gender']==='ذكر'? 'male' : modifiedFormData['gender']==='أنثى'? 'female' : 'unknown';
+    // Check if first_name, sex and is_dead are not null
+    if (modifiedFormData['first_name']===null || modifiedFormData['first_name']===undefined || modifiedFormData['first_name']===''
+    || modifiedFormData['gender']===null || modifiedFormData['gender']===undefined || modifiedFormData['gender']===''
+    || modifiedFormData['is_dead']===null || modifiedFormData['is_dead']===undefined || modifiedFormData['is_dead']==='') {
+        return false;
+    }
 
     try {
         await dbConnect();

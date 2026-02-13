@@ -41,6 +41,19 @@ export default function IndividualSubmissionForm() {
                         <FormControlLabel value="غير معلوم" control={<Radio />} label="غير معلوم" />
                     </RadioGroup>
                 </FormControl>
+                <FormControl sx={{ mt: 2 }}>
+                    <FormLabel id="is-dead-label">حي؟</FormLabel>
+                    <RadioGroup
+                        aria-labelledby="is-dead-label"
+                        defaultValue="حي"
+                        name="is_dead_field"
+                        row
+                    >
+                        <FormControlLabel value="حي" control={<Radio />} label="حي" />
+                        <FormControlLabel value="متوفى" control={<Radio />} label="متوفى" />
+                        <FormControlLabel value="غير معلوم" control={<Radio />} label="غير معلوم" />
+                    </RadioGroup>
+                </FormControl>
             </Stack>
             <Button
                 type={'submit'}

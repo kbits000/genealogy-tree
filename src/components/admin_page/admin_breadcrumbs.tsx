@@ -11,9 +11,9 @@ export default function AdminBreadcrumbs({breadcrumbsList}: {breadcrumbsList: {t
             <Breadcrumbs aria-label="breadcrumb">
                 {breadcrumbsList.map((item) => (
                     item.path === "#" ? (
-                        <Typography sx={{ color: 'text.primary' }}>{item.text}</Typography>
+                        <Typography key={item.text} sx={{ color: 'text.primary' }}>{item.text}</Typography>
                     ) : (
-                        <Link underline="hover" color="inherit" href={item.path}>
+                        <Link key={item.text} underline="hover" color="inherit" href={item.path}>
                             {item.text}
                         </Link>
                     )

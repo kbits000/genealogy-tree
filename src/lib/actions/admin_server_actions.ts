@@ -26,7 +26,6 @@ export async function addNewIndividualServerAction(rawFormData: FormData) {
     }
 }
 
-export async function getAllIndividualsServerAction() {
-    console.log('getAllIndividualsServerAction');
-    await getAllIndividuals();
+export async function searchIndividualsServerAction(query: string) {
+    return await getAllIndividuals(query || undefined);
 }

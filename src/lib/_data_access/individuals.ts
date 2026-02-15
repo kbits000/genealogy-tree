@@ -37,17 +37,28 @@ export async function addNewIndividual(modifiedFormData: {
 }
 
 
-export async function getAllIndividuals() {
+export async function getAllIndividuals(query?: string) {
     try {
         await dbConnect();
-        const individuals = await IndividualModel.find({}).select('first_name parent_name grandparent_name last_name sex is_dead').lean();
+        const filter = query
+            ? { $or: [
+                    { first_name: { $regex: query, $options: 'i' } },
+                    { parent_name: { $regex: query, $options: 'i' } },
+                    { grandparent_name: { $regex: query, $options: 'i' } },
+                    { last_name: { $regex: query, $options: 'i' } },
+                ]}
+            : {};
+        const individuals = await IndividualModel.find(filter).select('first_name parent_name grandparent_name last_name sex is_dead').lean();
         return individuals.map(ind => ({
             _id: String(ind._id),
             first_name: ind.first_name,
+            parent_name: ind.parent_name,
+            grandparent_name: ind.grandparent_name,
+            last_name: ind.last_name,
             sex: ind.sex,
             is_dead: ind.is_dead,
         }));
     } catch {
-
+        return [];
     }
 }

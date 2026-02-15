@@ -3,14 +3,17 @@
 import { useState } from 'react';
 import Box from '@mui/material/Box';
 import SearchIcon from '@mui/icons-material/Search';
+import EditIcon from '@mui/icons-material/Edit';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import Divider from '@mui/material/Divider';
+import IconButton from '@mui/material/IconButton';
+import Link from 'next/link';
 import { searchIndividualsServerAction } from "@/lib/actions/admin_server_actions";
 
 type Individual = {
-    _id: string;
+    publicId: string;
     first_name: string;
     parent_name?: string;
     grandparent_name?: string;
@@ -57,9 +60,15 @@ export default function IndividualsList({ individuals }: { individuals: Individu
                             .filter(Boolean)
                             .join(' ');
                         return (
-                            <div key={ind._id}>
+                            <div key={ind.publicId}>
                                 {index > 0 && <Divider />}
-                                <ListItem>
+                                <ListItem
+                                    secondaryAction={
+                                        <IconButton component={Link} href={`/admin/individuals/${ind.publicId}/edit`} edge="end" aria-label="تعديل">
+                                            <EditIcon />
+                                        </IconButton>
+                                    }
+                                >
                                     <ListItemText primary={fullName} />
                                 </ListItem>
                             </div>

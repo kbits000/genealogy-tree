@@ -1,7 +1,14 @@
 import mongoose, {Schema} from "mongoose";
+import { v4 as uuidv4 } from 'uuid';
 
 const IndividualSchema: Schema = new mongoose.Schema(
     {
+        publicId: {
+                type: Schema.Types.UUID,
+                default: uuidv4,
+                unique: true,
+                index: true
+        },
         first_name: {type: String, required: true},
         parent_name: {type: String},
         grandparent_name: {type: String},

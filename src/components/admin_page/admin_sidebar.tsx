@@ -30,16 +30,16 @@ import LogoutIcon from "@mui/icons-material/Logout";
 const drawerWidth = 240;
 
 const navItems = [
-    { text: 'Main', icon: <HomeIcon />, path: '/admin' },
-    { text: 'Starred', icon: <StarIcon />, path: '#' },
-    { text: 'Individuals', icon: <PeopleIcon />, path: '/admin/individuals' },
-    { text: 'Galleries', icon: <CollectionsIcon />, path: '#' },
-    { text: 'Statistics', icon: <AnalyticsIcon />, path: '#' },
-    { text: 'Settings', icon: <SettingsIcon />, path: '#' },
-    { text: 'History', icon: <HistoryIcon />, path: '#' },
-    { text: 'Logs', icon: <UpdateIcon />, path: '#' },
-    { text: 'Exit To App', icon: <ExitToAppIcon color='primary' />, path: '#' },
-    { text: 'Logout', icon: <LogoutIcon color='error'/>, path: '#' },
+    { key: 'Main', text: 'الرئيسية', icon: <HomeIcon />, path: '/admin' },
+    { key: 'Starred', text: 'Starred', icon: <StarIcon />, path: '#' },
+    { key: 'Individuals', text: 'الافراد', icon: <PeopleIcon />, path: '/admin/individuals' },
+    { key: 'Galleries', text: 'ألبوم', icon: <CollectionsIcon />, path: '#' },
+    { key: 'Statistics', text: 'إحصائيات', icon: <AnalyticsIcon />, path: '#' },
+    { key: 'Settings', text: 'الإعدادات', icon: <SettingsIcon />, path: '#' },
+    { key: 'History', text: 'History', icon: <HistoryIcon />, path: '#' },
+    { key: 'Logs', text: 'السجل (logs)', icon: <UpdateIcon />, path: '#' },
+    { key: 'Exit To App', text: 'الخروج من الصفحة الاشراف', icon: <ExitToAppIcon color='primary' />, path: '#' },
+    { key: 'Logout', text: 'تسجيل الخروج', icon: <LogoutIcon color='error'/>, path: '#' },
 ]
 
 export default function AdminSidebar({content, selectedButton} : {content?: React.ReactNode; selectedButton: string;}) {
@@ -58,7 +58,7 @@ export default function AdminSidebar({content, selectedButton} : {content?: Reac
             <Divider />
             <List>
                 {navItems.map((item) => (
-                    <ListItem key={item.text} disablePadding>
+                    <ListItem key={item.key} disablePadding>
                         <ListItemButton component="a" href={item.path} sx={{ textAlign: 'center' }} selected={selectedListItemButton == item.text}>
                             <ListItemIcon>
                                 {item.icon}
@@ -94,7 +94,7 @@ export default function AdminSidebar({content, selectedButton} : {content?: Reac
                     </Typography>
                     <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
                         {navItems.map((item) => (
-                            <Button component="a" href={item.path} key={item.text} sx={{ color: '#fff' }} startIcon={item.icon}>
+                            <Button component="a" href={item.path} key={item.key} sx={{ color: '#fff' }} startIcon={item.icon}>
                                 {item.text}
                             </Button>
                         ))}

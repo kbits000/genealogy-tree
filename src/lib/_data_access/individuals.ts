@@ -26,6 +26,9 @@ export async function addNewIndividual(modifiedFormData: {
         await dbConnect();
         const newIndividual = new IndividualModel({
             first_name: modifiedFormData['first_name'],
+            parent_name: modifiedFormData['parent_name'],
+            grandparent_name: modifiedFormData['grandparent_name'],
+            last_name: modifiedFormData['last_name'],
             sex: modifiedFormData['gender'],
             is_dead: modifiedFormData['is_dead'],
         });
@@ -48,9 +51,9 @@ export async function getAllIndividuals(query?: string) {
                     { last_name: { $regex: query, $options: 'i' } },
                 ]}
             : {};
-        const individuals = await IndividualModel.find(filter).select('first_name parent_name grandparent_name last_name sex is_dead').lean();
+        const individuals = await IndividualModel.find(filter).select('publicId first_name parent_name grandparent_name last_name sex is_dead').lean();
         return individuals.map(ind => ({
-            _id: String(ind._id),
+            publicId: String(ind.publicId),
             first_name: ind.first_name,
             parent_name: ind.parent_name,
             grandparent_name: ind.grandparent_name,
@@ -60,5 +63,55 @@ export async function getAllIndividuals(query?: string) {
         }));
     } catch {
         return [];
+    }
+}
+
+
+
+export async function getIndividualByPublicId(publicId: string) {
+    try {
+        await dbConnect();
+        const ind = await IndividualModel.findOne({ publicId }).select('publicId first_name parent_name grandparent_name last_name sex is_dead').lean();
+        if (!ind) return null;
+        return {
+            publicId: String(ind.publicId),
+            first_name: ind.first_name,
+            parent_name: ind.parent_name,
+            grandparent_name: ind.grandparent_name,
+            last_name: ind.last_name,
+            sex: ind.sex,
+            is_dead: ind.is_dead,
+        };
+    } catch {
+        return null;
+    }
+}
+
+
+export async function updateIndividual(publicId: string, data: {
+    first_name: string;
+    parent_name?: string;
+    grandparent_name?: string;
+    last_name?: string;
+    gender: string;
+    is_dead: string;
+}) {
+    try {
+        await dbConnect();
+        const individual = await IndividualModel.findOne({ publicId });
+        if (!individual) return false;
+
+        individual.first_name = data.first_name;
+        individual.parent_name = data.parent_name;
+        individual.grandparent_name = data.grandparent_name;
+        individual.last_name = data.last_name;
+        individual.sex = data.gender;
+        individual.is_dead = data.is_dead;
+
+        await individual.save().then(savedDoc => {
+            return savedDoc === doc;
+        });
+    } catch {
+        return false;
     }
 }

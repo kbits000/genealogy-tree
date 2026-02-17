@@ -51,9 +51,9 @@ export async function getAllIndividuals(query?: string) {
                     { last_name: { $regex: query, $options: 'i' } },
                 ]}
             : {};
-        const individuals = await IndividualModel.find(filter).select('publicId first_name parent_name grandparent_name last_name sex is_dead').lean();
+        const individuals = await IndividualModel.find(filter).select('public_id first_name parent_name grandparent_name last_name sex is_dead').lean();
         return individuals.map(ind => ({
-            publicId: String(ind.publicId),
+            public_id: String(ind.public_id),
             first_name: ind.first_name,
             parent_name: ind.parent_name,
             grandparent_name: ind.grandparent_name,
@@ -71,10 +71,10 @@ export async function getAllIndividuals(query?: string) {
 export async function getIndividualByPublicId(publicId: string) {
     try {
         await dbConnect();
-        const ind = await IndividualModel.findOne({ publicId }).select('publicId first_name parent_name grandparent_name last_name sex is_dead').lean();
+        const ind = await IndividualModel.findOne({ public_id: publicId }).select('public_id first_name parent_name grandparent_name last_name sex is_dead').lean();
         if (!ind) return null;
         return {
-            publicId: String(ind.publicId),
+            public_id: String(ind.public_id),
             first_name: ind.first_name,
             parent_name: ind.parent_name,
             grandparent_name: ind.grandparent_name,
@@ -98,7 +98,7 @@ export async function updateIndividual(publicId: string, data: {
 }) {
     try {
         await dbConnect();
-        const individual = await IndividualModel.findOne({ publicId });
+        const individual = await IndividualModel.findOne({ public_id: publicId });
         if (!individual) return false;
 
         individual.first_name = data.first_name;
@@ -109,8 +109,19 @@ export async function updateIndividual(publicId: string, data: {
         individual.is_dead = data.is_dead;
 
         await individual.save().then(savedDoc => {
-            return savedDoc === doc;
+            return savedDoc === individual;
         });
+    } catch {
+        return false;
+    }
+}
+
+
+export async function deleteIndividual(publicId: string) {
+    try {
+        await dbConnect();
+        const result = await IndividualModel.deleteOne({public_id: publicId});
+        return result.deletedCount === 1;
     } catch {
         return false;
     }

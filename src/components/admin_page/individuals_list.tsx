@@ -60,11 +60,11 @@ export default function IndividualsList({ individuals }: { individuals: Individu
                             .filter(Boolean)
                             .join(' ');
                         return (
-                            <div key={ind.publicId}>
+                            <div key={ind.public_id}>
                                 {index > 0 && <Divider />}
                                 <ListItem
                                     secondaryAction={
-                                        <IconButton component={Link} href={`/admin/individuals/${ind.publicId}/edit`} edge="end" aria-label="تعديل">
+                                        <IconButton component={Link} href={`/admin/individuals/${ind.public_id}/edit`} edge="end" aria-label="تعديل">
                                             <EditIcon />
                                         </IconButton>
                                     }

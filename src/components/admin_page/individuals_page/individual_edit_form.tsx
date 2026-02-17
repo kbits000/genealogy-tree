@@ -98,7 +98,7 @@ export default function IndividualEditForm({ individual, publicId }: { individua
                 color="error"
                 sx={{ ml: 2 }}
                 loading={loading}
-                onClick={() => handleDelete}
+                onClick={handleDelete}
             >
                 حذف
             </Button>

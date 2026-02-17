@@ -58,9 +58,6 @@ export default function IndividualSubmissionForm() {
             <Button
                 type={'submit'}
                 variant="contained"
-                onClick={() => {
-                    alert('clicked');
-                }}
                 loading={loading}
             >
                 حفظ

@@ -9,7 +9,7 @@ import FormControl from '@mui/material/FormControl';
 import FormLabel from '@mui/material/FormLabel';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
-import { editIndividualServerAction } from "@/lib/actions/admin_server_actions";
+import { editIndividualServerAction, deleteIndividualServerAction } from "@/lib/actions/admin_server_actions";
 
 type Individual = {
     first_name: string;
@@ -38,6 +38,12 @@ export default function IndividualEditForm({ individual, publicId }: { individua
     async function handleSubmit(formData: FormData) {
         setLoading(true);
         await editIndividualServerAction(publicId, formData);
+        setLoading(false);
+    }
+
+    async function handleDelete() {
+        setLoading(true);
+        await deleteIndividualServerAction(publicId);
         setLoading(false);
     }
 
@@ -86,6 +92,15 @@ export default function IndividualEditForm({ individual, publicId }: { individua
                 loading={loading}
             >
                 حفظ التعديلات
+            </Button>
+            <Button
+                variant="outlined"
+                color="error"
+                sx={{ ml: 2 }}
+                loading={loading}
+                onClick={() => handleDelete}
+            >
+                حذف
             </Button>
         </form>
     )

@@ -13,7 +13,7 @@ import Link from 'next/link';
 import { searchIndividualsServerAction } from "@/lib/actions/admin_server_actions";
 
 type Individual = {
-    publicId: string;
+    public_id: string;
     first_name: string;
     parent_name?: string;
     grandparent_name?: string;

@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 const IndividualSchema: Schema = new mongoose.Schema(
     {
-        publicId: {
+        public_id: {
                 type: Schema.Types.UUID,
                 default: uuidv4,
                 unique: true,

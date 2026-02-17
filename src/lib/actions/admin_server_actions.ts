@@ -1,6 +1,6 @@
 'use server'
 
-import { addNewIndividual, getAllIndividuals, updateIndividual } from "@/lib/_data_access/individuals";
+import { addNewIndividual, getAllIndividuals, updateIndividual, deleteIndividual } from "@/lib/_data_access/individuals";
 import { redirect } from 'next/navigation'
 
 // TODO add input validation
@@ -50,3 +50,10 @@ export async function editIndividualServerAction(publicId: string, rawFormData: 
     }
 }
 
+// TODO add a return to page to notify admin user that the individual did not get deleted
+export async function deleteIndividualServerAction(publicId: string) {
+    const result = await deleteIndividual(publicId);
+    if (result) {
+        redirect(`/admin/individuals`);
+    }
+}

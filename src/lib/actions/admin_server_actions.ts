@@ -2,6 +2,7 @@
 
 import { addNewIndividual, getAllIndividuals, updateIndividual, deleteIndividual } from "@/lib/_data_access/individuals";
 import { redirect } from 'next/navigation'
+import { refresh } from 'next/cache'
 
 // TODO add input validation
 export async function addNewIndividualServerAction(rawFormData: FormData) {
@@ -45,8 +46,12 @@ export async function editIndividualServerAction(publicId: string, rawFormData: 
     modifiedFormData['is_dead'] = isDead;
 
     const result = await updateIndividual(publicId, modifiedFormData);
+
     if (result) {
-        redirect(`/admin/individuals`);
+        refresh();
+        return true;
+    } else {
+        return false;
     }
 }
 

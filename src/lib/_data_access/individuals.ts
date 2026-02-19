@@ -107,10 +107,9 @@ export async function updateIndividual(publicId: string, data: {
         individual.last_name = data.last_name;
         individual.sex = data.gender;
         individual.is_dead = data.is_dead;
+        const result = await individual.save();
 
-        await individual.save().then(savedDoc => {
-            return savedDoc === individual;
-        });
+        return result === individual;
     } catch {
         return false;
     }

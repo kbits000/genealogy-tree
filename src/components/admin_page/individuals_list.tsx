@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Box from '@mui/material/Box';
 import SearchIcon from '@mui/icons-material/Search';
 import EditIcon from '@mui/icons-material/Edit';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
@@ -64,9 +65,14 @@ export default function IndividualsList({ individuals }: { individuals: Individu
                                 {index > 0 && <Divider />}
                                 <ListItem
                                     secondaryAction={
-                                        <IconButton component={Link} href={`/admin/individuals/${ind.public_id}/edit`} edge="end" aria-label="تعديل">
-                                            <EditIcon />
-                                        </IconButton>
+                                        <Box>
+                                            <IconButton component={Link} href={`/admin/individuals/${ind.public_id}/`} aria-label="عرض">
+                                                <VisibilityIcon />
+                                            </IconButton>
+                                            <IconButton component={Link} href={`/admin/individuals/${ind.public_id}/edit`} edge="end" aria-label="تعديل">
+                                                <EditIcon />
+                                            </IconButton>
+                                        </Box>
                                     }
                                 >
                                     <ListItemText primary={fullName} />

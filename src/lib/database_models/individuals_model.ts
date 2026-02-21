@@ -24,13 +24,13 @@ const IndividualSchema: Schema = new mongoose.Schema(
         additional_information: {type: String},
         mother_id: {type: Schema.Types.ObjectId, ref: "individuals"},
         father_id: {type: Schema.Types.ObjectId, ref: "individuals"},
-        wives_id: {type: Schema.Types.ObjectId, ref: "individuals"},
-        husbands_id: {type: Schema.Types.ObjectId, ref: "individuals"},
+        wives_ids: [{type: Schema.Types.ObjectId, ref: "individuals"}],
+        husbands_ids: [{type: Schema.Types.ObjectId, ref: "individuals"}],
         siblings_ids: [
             {type: Schema.Types.ObjectId, ref: "individuals"},
         ],
-        grandmother_id: {type: Schema.Types.ObjectId, ref: "individuals"},
-        grandfather_id: {type: Schema.Types.ObjectId, ref: "individuals"},
+        grandmother_id: [{type: Schema.Types.ObjectId, ref: "individuals"}],
+        grandfather_id: [{type: Schema.Types.ObjectId, ref: "individuals"}],
         individuals_ids: [
             {
                     individual_id: {type: Schema.Types.ObjectId, ref: "individuals"},

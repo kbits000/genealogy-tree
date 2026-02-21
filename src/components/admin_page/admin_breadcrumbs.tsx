@@ -1,4 +1,3 @@
-'use client';
 
 import Breadcrumbs from '@mui/material/Breadcrumbs';
 import Box from '@mui/material/Box';

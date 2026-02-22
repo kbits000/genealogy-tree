@@ -1,13 +1,13 @@
 import mongoose, {Schema} from "mongoose";
-import { v4 as uuidv4 } from 'uuid';
+import {v4 as uuidv4} from 'uuid';
 
 const IndividualSchema: Schema = new mongoose.Schema(
     {
         public_id: {
-                type: Schema.Types.UUID,
-                default: uuidv4,
-                unique: true,
-                index: true
+            type: Schema.Types.UUID,
+            default: uuidv4,
+            unique: true,
+            index: true
         },
         first_name: {type: String, required: true},
         parent_name: {type: String},
@@ -24,19 +24,47 @@ const IndividualSchema: Schema = new mongoose.Schema(
         additional_information: {type: String},
         mother_id: {type: Schema.Types.ObjectId, ref: "individuals"},
         father_id: {type: Schema.Types.ObjectId, ref: "individuals"},
-        wives_ids: [{type: Schema.Types.ObjectId, ref: "individuals"}],
-        husbands_ids: [{type: Schema.Types.ObjectId, ref: "individuals"}],
+        spouses_ids: [{
+            spouse_id: {type: Schema.Types.ObjectId, ref: "individuals"},
+            spouse_first_name: {type: String},
+            sex: {type: String, enum: ["male", "female", "unknown"]},
+            is_dead: {type: String, enum: ["alive", "dead", "unknown"]},
+            is_divorced: {type: String, enum: ["yes", "no", "unknown"], default: 'unknown'},
+        }],
         siblings_ids: [
-            {type: Schema.Types.ObjectId, ref: "individuals"},
-        ],
-        grandmother_id: [{type: Schema.Types.ObjectId, ref: "individuals"}],
-        grandfather_id: [{type: Schema.Types.ObjectId, ref: "individuals"}],
-        individuals_ids: [
             {
-                    individual_id: {type: Schema.Types.ObjectId, ref: "individuals"},
-                    relationship: {type: String},
+                sibling_id: {type: Schema.Types.ObjectId, ref: "individuals"},
+                sibling_first_name: {type: String},
+                sex: {type: String, enum: ["male", "female", "unknown"]},
+                is_dead: {type: String, enum: ["alive", "dead", "unknown"]},
+                sibling_side: {type: String, enum: ["mother", "father", "unknown"], default: 'unknown'},
             }
         ],
+        grandmothers_id: [{
+            grandmother_id: {type: Schema.Types.ObjectId, ref: "individuals"},
+            grandmother_first_name: {type: String},
+            is_dead: {type: String, enum: ["alive", "dead", "unknown"]},
+            mother_of: {type: String, enum: ["mother", "father", "unknown"], default: 'unknown'},
+        }],
+        grandfathers_id: [{
+            grandfather_id: {type: Schema.Types.ObjectId, ref: "individuals"},
+            grandfather_first_name: {type: String},
+            is_dead: {type: String, enum: ["alive", "dead", "unknown"]},
+            father_of: {type: String, enum: ["mother", "father", "unknown"], default: 'unknown'},
+        }],
+        children_ids: [{
+            child_id: {type: Schema.Types.ObjectId, ref: "individuals"},
+            child_first_name: {type: String},
+            sex: {type: String, enum: ["male", "female", "unknown"]},
+            is_dead: {type: String, enum: ["alive", "dead", "unknown"]},
+        }],
+        individuals_ids: [{
+            individual_id: {type: Schema.Types.ObjectId, ref: "individuals"},
+            relationship: {type: String},
+            is_dead: {type: String, enum: ["alive", "dead", "unknown"]},
+            sex: {type: String, enum: ["male", "female", "unknown"]},
+            additional_information: {type: String},
+        }],
     },
     {timestamps: true}
 );

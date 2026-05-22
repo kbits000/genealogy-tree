@@ -40,13 +40,13 @@ const IndividualSchema: Schema = new mongoose.Schema(
                 sibling_side: {type: String, enum: ["mother", "father", "unknown"], default: 'unknown'},
             }
         ],
-        grandmothers_id: [{
+        grandmothers_ids: [{
             grandmother_id: {type: Schema.Types.ObjectId, ref: "individuals"},
             grandmother_first_name: {type: String},
             is_dead: {type: String, enum: ["alive", "dead", "unknown"]},
             mother_of: {type: String, enum: ["mother", "father", "unknown"], default: 'unknown'},
         }],
-        grandfathers_id: [{
+        grandfathers_ids: [{
             grandfather_id: {type: Schema.Types.ObjectId, ref: "individuals"},
             grandfather_first_name: {type: String},
             is_dead: {type: String, enum: ["alive", "dead", "unknown"]},

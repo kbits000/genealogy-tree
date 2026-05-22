@@ -134,25 +134,25 @@ export async function getAllIndividuals(query?: string) {
 export async function getIndividualByPublicId(publicId: string) {       // TODO addd query selection
     try {
         await dbConnect();
-        const ind = await IndividualModel.findOne({ public_id: publicId })
-            .select('public_id first_name parent_name grandparent_name last_name sex is_dead '
-                + 'mother_id father_id wives_ids husbands_ids siblings_ids '
-                + 'grandmothers_ids grandfathers_ids individuals_ids')
-            .populate('mother_id', 'public_id first_name parent_name')
-            .populate('father_id', 'public_id first_name parent_name')
-            // .populate('wives_ids', 'public_id first_name parent_name')
-            // .populate('husbands_ids', 'public_id first_name parent_name')
-            .populate('siblings_ids', 'public_id first_name parent_name')
-            .populate('grandmothers_ids', 'public_id first_name parent_name')
-            .populate('grandfathers_ids', 'public_id first_name parent_name')
-            .populate('individuals_ids.individual_id', 'public_id first_name parent_name')
+        const individual = await IndividualModel.findOne({ public_id: publicId})
+            .select('public_id first_name parent_name grandparent_name last_name sex is_dead'
+                + 'mother_id father_id spouses_ids siblings_ids grandmothers_ids grandfathers_ids individuals_ids'
+            )
+            .populate('spouses_ids.spouse_id', 'public_id first_name parent_name last_name')
+            .populate('siblings_ids.sibling_id', 'public_id first_name parent_name last_name')
+            .populate('grandmothers_ids.grandmother_id', 'public_id first_name parent_name last_name')
+            .populate('grandfathers_ids.grandfather_id', 'public_id first_name parent_name last_name')
+            .populate('individuals_ids.individual_id', 'public_id first_name parent_name last_name')
             .lean();
-        if (!ind) return null;
 
-        const i = ind as typeof ind & {
+
+        if (!individual) return null;
+
+        const i = individual as typeof individual & {
             mother_id?: { public_id: unknown; first_name: string; parent_name?: string } | null;
             father_id?: { public_id: unknown; first_name: string; parent_name?: string } | null;
             siblings_ids?: { public_id: unknown; first_name: string; parent_name?: string }[];
+            spouses_ids: { public_id: unknown; first_name: string; parent_name?: string }[];
             grandmothers_ids?: { public_id: unknown; first_name: string; parent_name?: string }[];
             grandfathers_ids?: { public_id: unknown; first_name: string; parent_name?: string }[];
             individuals_ids?: { individual_id: { public_id: unknown; first_name: string; parent_name?: string } | null; relationship: string }[];
@@ -169,11 +169,10 @@ export async function getIndividualByPublicId(publicId: string) {       // TODO 
             mother_id: i.mother_id ? relatedShape(i.mother_id) : undefined,
             father_id: i.father_id ? relatedShape(i.father_id) : undefined,
             siblings_ids:   (i.siblings_ids   ?? []).map(relatedShape),
+            spouses_ids: (i.spouses_ids ?? []).map(relatedShape),
             grandmothers_ids: (i.grandmothers_ids ?? []).map(relatedShape),
             grandfathers_ids: (i.grandfathers_ids ?? []).map(relatedShape),
-            individuals_ids: (i.individuals_ids ?? [])
-                .filter(e => e.individual_id)
-                .map(e => ({ individual: relatedShape(e.individual_id!), relationship: e.relationship })),
+            individuals_ids: (i.individuals_ids ?? []).map(relatedShape),
         };
     } catch {
         return null;

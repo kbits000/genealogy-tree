@@ -15,21 +15,53 @@ import Autocomplete from '@mui/material/Autocomplete';
 import Box from '@mui/material/Box';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
-import { addNewIndividualServerAction } from "@/lib/actions/admin_server_actions";
+import { addNewIndividualServerAction, getSpouseOptionsServerAction } from "@/lib/actions/admin_server_actions";
 
-type Option = { public_id: string; label: string };
+type Option = { public_id: string; label: string; sex: string };
+
+function getSpouseCandidateSexes(subjectSex: string): ('male' | 'female' | 'unknown')[] {
+    if (subjectSex === 'male') return ['female', 'unknown'];
+    if (subjectSex === 'female') return ['male', 'unknown'];
+    return ['male', 'female', 'unknown'];
+}
+
+function mergeSpouseOptions(options: Option[], selected: Option[]): Option[] {
+    const byId = new Map(options.map(o => [o.public_id, o]));
+    for (const spouse of selected) {
+        if (!byId.has(spouse.public_id)) {
+            byId.set(spouse.public_id, spouse);
+        }
+    }
+    return Array.from(byId.values());
+}
 
 const relationshipSideArabic = ['جهة الأب','جهة الأم', 'غير معلوم'];
 
 // TODO implement input validation
-export default function IndividualSubmissionForm({ allIndividuals }: { allIndividuals: Option[] }) {
+export default function IndividualSubmissionForm({
+    allIndividuals,
+}: {
+    allIndividuals: Option[];
+}) {
+    const [gender, setGender] = useState('unknown');
+    const [spouseOptions, setSpouseOptions] = useState<Option[]>(allIndividuals);
     const [motherId, setMotherId] = useState<Option | null>(null);
     const [fatherId, setFatherId] = useState<Option | null>(null);
     const [spousesIds, setSpousesIds] = useState<Option[]>([]);
     const [siblingsIds, setSiblingsIds] = useState<{ sibling: Option | null; relationshipSide: string }[]>([]);
-    const [grandmothersIds, setGrandmothersIds] = useState<{ grandmother: Option | null; relationshipSide: string }[]>([]);       // TODO grandmothersIds and grandfathersIds are not of type Option. They are of type {public_id:string;label:string;relationshipSide:string;}
+    const [grandmothersIds, setGrandmothersIds] = useState<{ grandmother: Option | null; relationshipSide: string }[]>([]); // TODO grandmothersIds and grandfathersIds are not of type Option. They are of type {public_id:string;label:string;relationshipSide:string;}
     const [grandfathersIds, setGrandfathersIds] = useState<{ grandfather: Option | null; relationshipSide: string }[]>([]);
     const [individualsIds, setIndividualsIds] = useState<{ individual: Option | null; relationship: string }[]>([]);
+
+    async function handleGenderChange(newGender: string) {
+        setGender(newGender);
+        const options = allIndividuals.filter(i => getSpouseCandidateSexes(newGender).includes(i.sex as 'male' | 'female' | 'unknown'));
+        // setSpouseOptions(mergeSpouseOptions(options, spousesIds));      // TODO spouses that are of the other gender if known.
+        setSpouseOptions(options);
+        if (newGender === 'male' || newGender === 'female') {
+            setSpousesIds(spousesIds.filter(i => getSpouseCandidateSexes(newGender).includes(i.sex as 'male' | 'female' | 'unknown'))); // TODO only remove the spouses that are of the other gender if known.
+        }
+    }
 
     return (
         <Form action={addNewIndividualServerAction}>
@@ -65,26 +97,28 @@ export default function IndividualSubmissionForm({ allIndividuals }: { allIndivi
                     <FormLabel id="gender-label">الجنس</FormLabel>
                     <RadioGroup
                         aria-labelledby="gender-label"
-                        defaultValue="غير معلوم"
+                        defaultValue={gender}
+                        value={gender}
+                        onChange={(_, v) => handleGenderChange(v)}
                         name="gender_field"
                         row
                     >
-                        <FormControlLabel value="ذكر" control={<Radio />} label="ذكر" />
-                        <FormControlLabel value="أنثى" control={<Radio />} label="أنثى" />
-                        <FormControlLabel value="غير معلوم" control={<Radio />} label="غير معلوم" />
+                        <FormControlLabel value="male" control={<Radio />} label="ذكر" />
+                        <FormControlLabel value="female" control={<Radio />} label="أنثى" />
+                        <FormControlLabel value="unknown" control={<Radio />} label="غير معلوم" />
                     </RadioGroup>
                 </FormControl>
                 <FormControl sx={{ mt: 2 }}>
                     <FormLabel id="is-dead-label">حي؟</FormLabel>
                     <RadioGroup
                         aria-labelledby="is-dead-label"
-                        defaultValue="حي"
+                        defaultValue="unknown"
                         name="is_dead_field"
                         row
                     >
-                        <FormControlLabel value="حي" control={<Radio />} label="حي" />
-                        <FormControlLabel value="متوفى" control={<Radio />} label="متوفى" />
-                        <FormControlLabel value="غير معلوم" control={<Radio />} label="غير معلوم" />
+                        <FormControlLabel value="alive" control={<Radio />} label="حي" />
+                        <FormControlLabel value="dead" control={<Radio />} label="متوفى" />
+                        <FormControlLabel value="unknown" control={<Radio />} label="غير معلوم" />
                     </RadioGroup>
                 </FormControl>
             </Stack>
@@ -92,20 +126,20 @@ export default function IndividualSubmissionForm({ allIndividuals }: { allIndivi
             {/* Relationship fields */}
             <Stack spacing={2} sx={{ mt: 3, maxWidth: 480 }}>
                 <Autocomplete
-                    options={allIndividuals}
+                    options={allIndividuals.filter(i => i.sex === 'female' || i.sex === 'unknown')}
                     value={motherId}
                     onChange={(_, v) => setMotherId(v)}
                     renderInput={(params) => <TextField {...params} label="الأم" />}
                 />
                 <Autocomplete
-                    options={allIndividuals}
+                    options={allIndividuals.filter(i => i.sex === 'male' || i.sex === 'unknown')}
                     value={fatherId}
                     onChange={(_, v) => setFatherId(v)}
                     renderInput={(params) => <TextField {...params} label="الأب" />}
                 />
                 <Autocomplete
                     multiple
-                    options={allIndividuals}
+                    options={spouseOptions}
                     value={spousesIds}
                     onChange={(_, v) => setSpousesIds(v)}
                     renderInput={(params) => <TextField {...params} label="الأزواج" />}
@@ -164,7 +198,7 @@ export default function IndividualSubmissionForm({ allIndividuals }: { allIndivi
                             <Box key={idx} display="flex" gap={1} alignItems="center">
                                 <Autocomplete
                                     sx={{ flex: 1 }}
-                                    options={allIndividuals}
+                                    options={allIndividuals.filter(i => i.sex === 'female' || i.sex === 'unknown')}
                                     value={entry.grandmother}
                                     onChange={(_, v) => {
                                         const updated = [...grandmothersIds];
@@ -211,7 +245,7 @@ export default function IndividualSubmissionForm({ allIndividuals }: { allIndivi
                             <Box key={idx} display="flex" gap={1} alignItems="center">
                                 <Autocomplete
                                     sx={{ flex: 1 }}
-                                    options={allIndividuals}
+                                    options={allIndividuals.filter(i => i.sex === 'male' || i.sex === 'unknown')}
                                     value={entry.grandfather}
                                     onChange={(_, v) => {
                                         const updated = [...grandfathersIds];

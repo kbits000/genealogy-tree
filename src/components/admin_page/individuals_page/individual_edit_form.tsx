@@ -18,7 +18,7 @@ import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
-import { editIndividualServerAction, deleteIndividualServerAction } from "@/lib/actions/admin_server_actions";
+import { editIndividualServerAction, deleteIndividualServerAction, getSpouseOptionsServerAction } from "@/lib/actions/admin_server_actions";
 
 type Option = { public_id: string; label: string };
 type RelatedIndividual = { public_id: string; first_name: string; parent_name?: string };
@@ -62,14 +62,26 @@ function toOption(r: RelatedIndividual): Option {
     };
 }
 
+function mergeSpouseOptions(options: Option[], selected: Option[]): Option[] {
+    const byId = new Map(options.map(o => [o.public_id, o]));
+    for (const spouse of selected) {
+        if (!byId.has(spouse.public_id)) {
+            byId.set(spouse.public_id, spouse);
+        }
+    }
+    return Array.from(byId.values());
+}
+
 export default function IndividualEditForm({
                                                individual,
                                                publicId,
                                                allIndividuals,
+                                               spouseOptions: initialSpouseOptions,
                                            }: {
     individual: Individual;
     publicId: string;
     allIndividuals: Option[];
+    spouseOptions: Option[];
 }) {
     const [loading, setLoading] = useState(false);
     const [snackbarState, setSnackbarState] = useState<SnackbarOriginWithOpenBoolean>({ open: false, vertical: 'top', horizontal: 'center' });
@@ -79,6 +91,8 @@ export default function IndividualEditForm({
     const theme = useTheme();
     const matches = useMediaQuery(theme.breakpoints.up('md'));
 
+    const [gender, setGender] = useState(sexToArabic[individual.sex] ?? 'غير معلوم');
+    const [spouseOptions, setSpouseOptions] = useState<Option[]>(initialSpouseOptions);
     const [motherId, setMotherId] = useState<Option | null>(individual.mother_id ? toOption(individual.mother_id) : null);
     const [fatherId, setFatherId] = useState<Option | null>(individual.father_id ? toOption(individual.father_id) : null);
     const [spousesIds, setSpousesIds] = useState<Option[]>((individual.spouses_ids ?? []).map(toOption));
@@ -88,6 +102,22 @@ export default function IndividualEditForm({
     const [individualsIds, setIndividualsIds] = useState<{ individual: Option | null; relationship: string }[]>(
         (individual.individuals_ids ?? []).map(e => ({ individual: toOption(e.individual), relationship: e.relationship }))
     );
+
+    async function handleGenderChange(newGender: string) {
+        setGender(newGender);
+        const options = await getSpouseOptionsServerAction(newGender, publicId);
+        setSpouseOptions(mergeSpouseOptions(options, spousesIds));
+    }
+
+    // async function handleGenderChange(newGender: string) {
+    //     setGender(newGender);
+    //     const options = allIndividuals.filter(i => getSpouseCandidateSexes(newGender).includes(i.sex as 'male' | 'female' | 'unknown'));
+    //     // setSpouseOptions(mergeSpouseOptions(options, spousesIds));      // TODO spouses that are of the other gender if known.
+    //     setSpouseOptions(options);
+    //     if (newGender === 'male' || newGender === 'female') {
+    //         setSpousesIds(spousesIds.filter(i => getSpouseCandidateSexes(newGender).includes(i.sex as 'male' | 'female' | 'unknown'))); // TODO only remove the spouses that are of the other gender if known.
+    //     }
+    // }
 
     // TODO shows error even though there is success
     async function handleSubmit(formData: FormData) {
@@ -217,7 +247,8 @@ export default function IndividualEditForm({
                         <FormLabel id="gender-label">الجنس</FormLabel>
                         <RadioGroup
                             aria-labelledby="gender-label"
-                            defaultValue={sexToArabic[individual.sex] ?? 'غير معلوم'}
+                            value={gender}
+                            onChange={(_, v) => handleGenderChange(v)}
                             name="gender_field"
                             row
                         >
@@ -264,7 +295,7 @@ export default function IndividualEditForm({
                     {/*/>*/}
                     <Autocomplete
                         multiple
-                        options={allIndividuals}
+                        options={spouseOptions}
                         value={spousesIds}
                         onChange={(_, v) => setSpousesIds(v)}
                         renderInput={(params) => <TextField {...params} label="الأزواج" />}

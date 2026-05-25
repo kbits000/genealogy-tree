@@ -4,7 +4,7 @@ import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
 import Stack from '@mui/material/Stack';
 
-type RelatedIndividual = { public_id: string; first_name: string; parent_name?: string };
+type RelatedIndividual = { public_id: string; first_name: string; parent_name?: string; fullName: string; relationshipSide: string; };
 
 type Individual = {
     first_name: string;
@@ -13,15 +13,18 @@ type Individual = {
     last_name?: string;
     sex: string;
     is_dead: string;
-    mother_id?: RelatedIndividual;
-    father_id?: RelatedIndividual;
+    // mother_id?: RelatedIndividual;
+    mother_id?: string;
+    // father_id?: RelatedIndividual;
+    father_id?: string;
     // wives_ids?: RelatedIndividual[];
     // husbands_ids?: RelatedIndividual[];
     spouses_ids?: RelatedIndividual[];
     siblings_ids?: RelatedIndividual[];
     grandmothers_ids?: RelatedIndividual[];
     grandfathers_ids?: RelatedIndividual[];
-    individuals_ids?: { individual: RelatedIndividual; relationship: string }[];
+    // individuals_ids?: { individual: RelatedIndividual; relationship: string }[];
+    individuals_ids?: RelatedIndividual[];
 }
 
 const sexToArabic: Record<string, string> = {
@@ -102,19 +105,19 @@ export default function IndividualDetails({ individual }: { individual: Individu
             />
             <ChipsField
                 label="الإخوة والأخوات"
-                items={(individual.siblings_ids ?? []).map(r => fullName(r)!).filter(Boolean)}
+                items={(individual.siblings_ids ?? []).map(r => `الاسم: ${r.fullName}, جهة القرابة: ${relationshipSideToArabic[r.relationshipSide]}`).filter(Boolean)}
             />
             <ChipsField
                 label="الجدات"
-                items={(individual.grandmothers_ids ?? []).map(r => fullName(r)!).filter(Boolean)}
+                items={(individual.grandmothers_ids ?? []).map(r => `الاسم: ${r.fullName}, جهة القرابة: ${relationshipSideToArabic[r.relationshipSide]}`).filter(Boolean)}
             />
             <ChipsField
                 label="الأجداد"
-                items={(individual.grandfathers_ids ?? []).map(r => fullName(r)!).filter(Boolean)}
+                items={(individual.grandfathers_ids ?? []).map(r => `الاسم: ${r.fullName}, جهة القرابة: ${relationshipSideToArabic[r.relationshipSide]}`).filter(Boolean)}
             />
             <ChipsField
                 label="أفراد آخرون"
-                items={(individual.individuals_ids ?? []).map(e => `${fullName(e.individual)} — ${e.relationship}`).filter(Boolean)}
+                items={(individual.individuals_ids ?? []).map(r => `الاسم: ${r.fullName}, جهة القرابة: ${relationshipSideToArabic[r.relationshipSide]}`).filter(Boolean)}
             />
         </Stack>
     );

@@ -1,14 +1,12 @@
 'use server'
 
-import {addNewIndividual, deleteIndividual, getAllIndividuals, updateIndividual} from "@/lib/_data_access/individuals";
+import {addNewIndividual, deleteIndividual, getAllIndividuals, getSpouseCandidateSexes, updateIndividual} from "@/lib/_data_access/individuals";
 import {redirect} from 'next/navigation'
 import {refresh} from 'next/cache'
 
-const relationshipSideToEnglish: Record<string, string> = {
-    'جهة الأب': 'father',
-    'جهة الأم': 'mother',
-    'غير معلوم': 'unknown',
-};
+function relationshipSideToEnglishFunction(relationshipSide: string) {
+    return relationshipSide === 'جهة الأب' ? 'father' : relationshipSide === 'جهة الأم' ? 'mother' : 'unknown';
+}
 
 // TODO add input validation
 export async function addNewIndividualServerAction(rawFormData: FormData) {
@@ -28,25 +26,82 @@ export async function addNewIndividualServerAction(rawFormData: FormData) {
         grandfathers_ids: JSON.parse(rawFormData.get('grandfathers_ids_field') as string || '[]'),
         individuals_ids: JSON.parse(rawFormData.get('individuals_ids_field') as string || '[]'),
     };
-    modifiedFormData['gender'] = modifiedFormData['gender'] === 'ذكر' ? 'male' : modifiedFormData['gender'] === 'أنثى' ? 'female' : 'unknown';
-    modifiedFormData['is_dead'] = modifiedFormData['is_dead'] === 'حي' ? 'alive' : modifiedFormData['is_dead'] === 'متوفى' ? 'dead' : 'unknown';
+    // modifiedFormData['gender'] = modifiedFormData['gender'] === 'ذكر' ? 'male' : modifiedFormData['gender'] === 'أنثى' ? 'female' : 'unknown';
+    // modifiedFormData['is_dead'] = modifiedFormData['is_dead'] === 'حي' ? 'alive' : modifiedFormData['is_dead'] === 'متوفى' ? 'dead' : 'unknown';
     const grandmothers_ids_to_english = modifiedFormData['grandmothers_ids'].map(function doSmth(e: {public_id: string; relationshipSide: string}) {
-        return {...e, relationshipSide: relationshipSideToEnglish[e.relationshipSide]}
+        return {...e, relationshipSide: relationshipSideToEnglishFunction(e.relationshipSide)}
     }
     )
     modifiedFormData['grandmothers_ids'] = grandmothers_ids_to_english;
 
     const grandfathers_ids_to_english = modifiedFormData['grandfathers_ids'].map(function doSmth(e: {public_id: string; relationshipSide: string}) {
-            return {...e, relationshipSide: relationshipSideToEnglish[e.relationshipSide]}
+            return {...e, relationshipSide: relationshipSideToEnglishFunction(e.relationshipSide)}
         }
     )
     modifiedFormData['grandfathers_ids'] = grandfathers_ids_to_english;
 
+    // siblings_ids
+    const siblings_ids_to_english = modifiedFormData['siblings_ids'].map(function doSmth(e: {public_id: string; relationshipSide: string}) {
+        return {...e, relationshipSide: relationshipSideToEnglishFunction(e.relationshipSide)}
+    }
+    )
+    modifiedFormData['siblings_ids'] = siblings_ids_to_english;
+
+
+    // individuals_ids
+    const individuals_ids_to_english = modifiedFormData['individuals_ids'].map(function doSmth(e: {public_id: string; relationship: string}) {
+        return {...e, relationship: relationshipSideToEnglishFunction(e.relationship)}
+    }
+    )
+    modifiedFormData['individuals_ids'] = individuals_ids_to_english;
+
+
+    // // spouses_ids
+    // const spouses_ids_to_english = modifiedFormData['spouses_ids'].map(function doSmth(e: {public_id: string; is_divorced: string}) {
+    //     return {...e, is_divorced: isDivorcedToEnglishFunction(e.is_divorced)}
+    // }
+    // )
+    // modifiedFormData['spouses_ids'] = spouses_ids_to_english;
+
+    console.log('modifiedFormData: ', modifiedFormData);
+
     const result = await addNewIndividual(modifiedFormData);
-    console.log('result: ', result);
+
     if (result) {
         redirect(`/admin/individuals`)
     }
+}
+
+// const genderArabicToEnglish: Record<string, string> = {
+//     'ذكر': 'male',
+//     'أنثى': 'female',
+//     'غير معلوم': 'unknown',
+// };
+
+function genderArabicToEnglish(gender: string) {
+    return gender === 'ذكر' ? 'male' : gender === 'أنثى' ? 'female' : 'unknown';
+}
+
+function individualToOption(ind: {
+    public_id: string;
+    first_name: string;
+    parent_name?: string;
+    grandparent_name?: string;
+    last_name?: string;
+}) {
+    return {
+        public_id: ind.public_id,
+        label: [ind.first_name, ind.parent_name, ind.last_name].filter(Boolean).join(' '),
+    };
+}
+
+export async function getSpouseOptionsServerAction(subjectSexArabic: string, excludePublicId?: string) {
+    const subjectSex = genderArabicToEnglish(subjectSexArabic) ?? 'unknown';
+    const individuals = await getAllIndividuals(undefined, {
+        sexes: getSpouseCandidateSexes(subjectSex),
+        excludePublicId,
+    });
+    return individuals.map(individualToOption);
 }
 
 export async function searchIndividualsServerAction(query: string) {
@@ -73,13 +128,13 @@ export async function editIndividualServerAction(publicId: string, rawFormData: 
     modifiedFormData['gender'] = modifiedFormData['gender'] === 'ذكر' ? 'male' : modifiedFormData['gender'] === 'أنثى' ? 'female' : 'unknown';
     modifiedFormData['is_dead'] = modifiedFormData['is_dead'] === 'حي' ? 'alive' : modifiedFormData['is_dead'] === 'متوفى' ? 'dead' : 'unknown';
     const grandmothers_ids_to_english = modifiedFormData['grandmothers_ids'].map(function doSmth(e: {public_id: string; relationshipSide: string}) {
-            return {...e, relationshipSide: relationshipSideToEnglish[e.relationshipSide]}
+            return {...e, relationshipSide: relationshipSideToEnglishFunction(e.relationshipSide)}
         }
     )
     modifiedFormData['grandmothers_ids'] = grandmothers_ids_to_english;
 
     const grandfathers_ids_to_english = modifiedFormData['grandfathers_ids'].map(function doSmth(e: {public_id: string; relationshipSide: string}) {
-            return {...e, relationshipSide: relationshipSideToEnglish[e.relationshipSide]}
+            return {...e, relationshipSide: relationshipSideToEnglishFunction(e.relationshipSide)}
         }
     )
     modifiedFormData['grandfathers_ids'] = grandfathers_ids_to_english;
@@ -88,6 +143,7 @@ export async function editIndividualServerAction(publicId: string, rawFormData: 
 
     if (result) {
         refresh();
+        return true;
     } else {
         return false;
     }

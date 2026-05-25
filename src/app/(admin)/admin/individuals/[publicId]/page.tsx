@@ -13,7 +13,7 @@ export default async function IndividualsDetailsPage({ params }: { params: Promi
     if (!individual) {
         notFound();
     }
-
+    console.log('individual in page component: ', individual);
     return (
         <div dir='rtl'>
             <AdminSidebar selectedButton={'Individuals'} />

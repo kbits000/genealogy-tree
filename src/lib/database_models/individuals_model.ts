@@ -25,6 +25,7 @@ const IndividualSchema: Schema = new mongoose.Schema(
         mother_id: {type: Schema.Types.ObjectId, ref: "individuals"},
         father_id: {type: Schema.Types.ObjectId, ref: "individuals"},
         spouses_ids: [{
+            _id: false,
             spouse_id: {type: Schema.Types.ObjectId, ref: "individuals"},
             spouse_first_name: {type: String},
             sex: {type: String, enum: ["male", "female", "unknown"]},
@@ -34,6 +35,7 @@ const IndividualSchema: Schema = new mongoose.Schema(
         }],
         siblings_ids: [
             {
+                _id: false,
                 sibling_id: {type: Schema.Types.ObjectId, ref: "individuals"},
                 sibling_first_name: {type: String},
                 sex: {type: String, enum: ["male", "female", "unknown"]},
@@ -43,6 +45,7 @@ const IndividualSchema: Schema = new mongoose.Schema(
             }
         ],
         grandmothers_ids: [{
+            _id: false,
             grandmother_id: {type: Schema.Types.ObjectId, ref: "individuals"},
             grandmother_first_name: {type: String},
             is_dead: {type: String, enum: ["alive", "dead", "unknown"]},
@@ -50,6 +53,7 @@ const IndividualSchema: Schema = new mongoose.Schema(
             grandmother_public_id: {type: String},
         }],
         grandfathers_ids: [{
+            _id: false,
             grandfather_id: {type: Schema.Types.ObjectId, ref: "individuals"},
             grandfather_first_name: {type: String},
             is_dead: {type: String, enum: ["alive", "dead", "unknown"]},
@@ -57,6 +61,7 @@ const IndividualSchema: Schema = new mongoose.Schema(
             grandfather_public_id: {type: String},
         }],
         children_ids: [{
+            _id: false,
             child_id: {type: Schema.Types.ObjectId, ref: "individuals"},
             child_first_name: {type: String},
             sex: {type: String, enum: ["male", "female", "unknown"]},
@@ -64,6 +69,7 @@ const IndividualSchema: Schema = new mongoose.Schema(
             child_public_id: {type: String},
         }],
         individuals_ids: [{
+            _id: false,
             individual_id: {type: Schema.Types.ObjectId, ref: "individuals"},
             relationship: {type: String},
             is_dead: {type: String, enum: ["alive", "dead", "unknown"]},

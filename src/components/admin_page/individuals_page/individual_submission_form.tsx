@@ -52,8 +52,9 @@ export default function IndividualSubmissionForm({
     const [grandmothersIds, setGrandmothersIds] = useState<{ grandmother: Option | null; relationshipSide: string }[]>([]); // TODO grandmothersIds and grandfathersIds are not of type Option. They are of type {public_id:string;label:string;relationshipSide:string;}
     const [grandfathersIds, setGrandfathersIds] = useState<{ grandfather: Option | null; relationshipSide: string }[]>([]);
     const [individualsIds, setIndividualsIds] = useState<{ individual: Option | null; relationship: string }[]>([]);
+        
 
-    async function handleGenderChange(newGender: string) {
+    function handleGenderChange(event: React.ChangeEvent<HTMLInputElement>, newGender: string) {
         setGender(newGender);
         const options = allIndividuals.filter(i => getSpouseCandidateSexes(newGender).includes(i.sex as 'male' | 'female' | 'unknown'));
         // setSpouseOptions(mergeSpouseOptions(options, spousesIds));      // TODO spouses that are of the other gender if known.
@@ -97,9 +98,8 @@ export default function IndividualSubmissionForm({
                     <FormLabel id="gender-label">الجنس</FormLabel>
                     <RadioGroup
                         aria-labelledby="gender-label"
-                        defaultValue={gender}
                         value={gender}
-                        onChange={(_, v) => handleGenderChange(v)}
+                        onChange={handleGenderChange}
                         name="gender_field"
                         row
                     >
@@ -148,7 +148,12 @@ export default function IndividualSubmissionForm({
                     <FormLabel>الإخوة والأخوات</FormLabel>
                     <Stack spacing={1} sx={{ mt: 1 }}>
                         {siblingsIds.map((entry, idx) => (
-                            <Box key={idx} display="flex" gap={1} alignItems="center">
+                            // <Box key={idx} display="flex" gap={1} alignItems="center">
+                            <Box component="div" key={idx} sx={{
+                                display:"flex",
+                                gap:1,
+                                alignItems:"center"
+                            }}>
                                 <Autocomplete
                                     sx={{ flex: 1 }}
                                     options={allIndividuals}
@@ -195,7 +200,12 @@ export default function IndividualSubmissionForm({
                     <FormLabel>الجدات</FormLabel>
                     <Stack spacing={1} sx={{ mt: 1 }}>
                         {grandmothersIds.map((entry, idx) => (
-                            <Box key={idx} display="flex" gap={1} alignItems="center">
+                            // <Box key={idx} display="flex" gap={1} alignItems="center">
+                            <Box component="div" key={idx} sx={{
+                                display:"flex",
+                                gap:1,
+                                alignItems:"center"
+                            }}>
                                 <Autocomplete
                                     sx={{ flex: 1 }}
                                     options={allIndividuals.filter(i => i.sex === 'female' || i.sex === 'unknown')}
@@ -242,7 +252,12 @@ export default function IndividualSubmissionForm({
                     <FormLabel>الاجداد</FormLabel>
                     <Stack spacing={1} sx={{ mt: 1 }}>
                         {grandfathersIds.map((entry, idx) => (
-                            <Box key={idx} display="flex" gap={1} alignItems="center">
+                            // <Box key={idx} display="flex" gap={1} alignItems="center">
+                            <Box component="div" key={idx} sx={{
+                                display:"flex",
+                                gap:1,
+                                alignItems:"center"
+                            }}>
                                 <Autocomplete
                                     sx={{ flex: 1 }}
                                     options={allIndividuals.filter(i => i.sex === 'male' || i.sex === 'unknown')}
@@ -291,7 +306,12 @@ export default function IndividualSubmissionForm({
                     <FormLabel>أفراد آخرون</FormLabel>
                     <Stack spacing={1} sx={{ mt: 1 }}>
                         {individualsIds.map((entry, idx) => (
-                            <Box key={idx} display="flex" gap={1} alignItems="center">
+                            // <Box key={idx} display="flex" gap={1} alignItems="center">
+                            <Box component="div" key={idx} sx={{
+                                display:"flex",
+                                gap:1,
+                                alignItems:"center"
+                            }}>
                                 <Autocomplete
                                     sx={{ flex: 1 }}
                                     options={allIndividuals}

@@ -51,8 +51,15 @@ function fullName(r?: RelatedIndividual) {
 
 function Field({ label, value }: { label: string; value?: string }) {
     return (
-        <Box display="flex" gap={2} alignItems="baseline">
-            <Typography variant="body2" color="text.secondary" minWidth={120}>
+        // <Box display="flex" gap={2} alignItems="baseline">
+        <Box
+            component="div"
+            sx={{
+                display: "flex",
+                gap: 2,
+                alignItems: "baseline"
+            }}>
+            <Typography variant="body2" color="secondary" sx={{ minWidth: 120 }}>
                 {label}
             </Typography>
             <Typography variant="body1">
@@ -64,8 +71,15 @@ function Field({ label, value }: { label: string; value?: string }) {
 
 function ChipsField({ label, items }: { label: string; items: string[] }) {
     return (
-        <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
-            <Typography variant="body2" color="text.secondary" minWidth={120}>
+        // <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
+        <Box
+            component="div"
+            sx={{
+                display: "flex",
+                gap: 2,
+                alignItems: "center"
+            }}>
+            <Typography variant="body2" color="secondary" sx={{ minWidth: 120 }}>
                 {label}
             </Typography>
             {items.length === 0
@@ -84,14 +98,28 @@ export default function IndividualDetails({ individual }: { individual: Individu
             <Field label="اسم الجد" value={individual.grandparent_name} />
             <Field label="الاسم الأخير" value={individual.last_name} />
             <Divider />
-            <Box display="flex" gap={2} alignItems="center">
-                <Typography variant="body2" color="text.secondary" minWidth={120}>
+            {/* <Box display="flex" gap={2} alignItems="center"> */}
+            <Box
+                component="div"
+                sx={{
+                    display: "flex",
+                    gap: 2,
+                    alignItems: "center"
+                }}>
+                <Typography variant="body2" color="secondary" sx={{ minWidth: 120 }}>
                     الجنس
                 </Typography>
                 <Chip label={sexToArabic[individual.sex] ?? 'غير معلوم'} size="small" />
             </Box>
-            <Box display="flex" gap={2} alignItems="center">
-                <Typography variant="body2" color="text.secondary" minWidth={120}>
+            {/* <Box display="flex" gap={2} alignItems="center"> */}
+            <Box
+                component="div"
+                sx={{
+                    display: "flex",
+                    gap: 2,
+                    alignItems: "center"
+                }}>
+                <Typography variant="body2" color="secondary" sx={{ minWidth: 120 }}>
                     الحالة
                 </Typography>
                 <Chip label={isDeadToArabic[individual.is_dead] ?? 'غير معلوم'} size="small" />

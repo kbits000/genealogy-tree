@@ -12,7 +12,7 @@ import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import Autocomplete from '@mui/material/Autocomplete';
 import Box from '@mui/material/Box';
-import Snackbar, { SnackbarCloseReason, SnackbarOrigin } from '@mui/material/Snackbar';
+import Snackbar, { SnackbarOrigin } from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
@@ -147,10 +147,8 @@ export default function IndividualEditForm({
         setLoading(false);
     }
 
-    const handleClose = (
-        event?: React.SyntheticEvent | Event,
-        reason?: SnackbarCloseReason,
-    ) => {
+    const handleClose = (event: React.SyntheticEvent<any> | Event | null, reason: string) =>
+    {
         if (reason === 'clickaway') return;
         setSnackbarState({ ...snackbarState, open: false });
     };
@@ -165,7 +163,7 @@ export default function IndividualEditForm({
                 key={vertical + horizontal}
             >
                 <Alert
-                    onClose={handleClose}
+                    onClose={() => {}}
                     severity={severity === 'success' ? 'success' : 'error'}
                     variant="filled"
                     sx={{ width: '100%' }}
@@ -327,7 +325,12 @@ export default function IndividualEditForm({
                         <FormLabel>أفراد آخرون</FormLabel>
                         <Stack spacing={1} sx={{ mt: 1 }}>
                             {individualsIds.map((entry, idx) => (
-                                <Box key={idx} display="flex" gap={1} alignItems="center">
+                                // <Box key={idx} display="flex" gap={1} alignItems="center">
+                                <Box component="div" sx={{
+                                    display:"flex",
+                                    gap:1,
+                                }} key={idx}
+                                >
                                     <Autocomplete
                                         sx={{ flex: 1 }}
                                         options={allIndividuals}

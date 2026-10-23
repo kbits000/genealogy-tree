@@ -2,11 +2,26 @@ import "server-only";
 
 import dbConnect from "@/lib/dbConnect";
 import IndividualModel from "@/lib/database_models/individuals_model";
+import mongoose from "mongoose";
 
-async function resolvePublicId(publicId: string) {
+async function updateReverseRelationships( newIndividualId, { motherId, fatherId, spouses, siblings, children }, session) {
+
+    // const newIndividualId = await IndividualModel.findOne()
+    const motherDocument = await IndividualModel.findOneAndUpdate({ _id: motherId}).session(session);
+    motherDocument.children_ids.push({child_id: newIndividualId._id})
+    await motherDocument.save({ session })
+    
+    const fatherDocument = await IndividualModel.findOneAndUpdate({ _id: fatherId}).session(session);
+    fatherDocument.children_ids.push({child_id: newIndividualId._id})
+    await fatherDocument.save({ session })
+
+
+}
+
+async function resolvePublicId(publicId: string, session?: mongoose.ClientSession) {
     // console.log('resolvePublicId: ', publicId);
     if (!publicId) return null;
-    const doc = await IndividualModel.findOne({ public_id: publicId }).select('_id').lean();
+    const doc = await IndividualModel.findOne({ public_id: publicId }).select('_id').session(session ?? null).lean();
     return doc._id ?? null;
 }
 
@@ -20,7 +35,7 @@ function relatedShape(doc: { public_id: unknown; first_name: string; parent_name
 
 // TODO reflect updates in other individuals' documents
 // TODO add input validation
-export async function addNewIndividual(modifiedFormData: {
+export async function addNewIndividualNoACID(modifiedFormData: {
     first_name: string;
     parent_name?: string;
     grandparent_name?: string;
@@ -90,6 +105,179 @@ export async function addNewIndividual(modifiedFormData: {
         const grandmothersIds =settledResults[4].status === 'fulfilled' ? settledResults[4].value : [];
         const grandfathersIds =settledResults[5].status === 'fulfilled' ? settledResults[5].value : [];
         const indIds =settledResults[6].status === 'fulfilled' ? settledResults[6].value : [];
+        // console.log('motherId is: ', motherId)
+        // console.log('motherId TYPE is: ', typeof(motherId))
+        const newIndividual = new IndividualModel({
+            first_name: modifiedFormData['first_name'],
+            parent_name: modifiedFormData['parent_name'],
+            grandparent_name: modifiedFormData['grandparent_name'],
+            last_name: modifiedFormData['last_name'],
+            sex: modifiedFormData['gender'],
+            is_dead: modifiedFormData['is_dead'],
+            mother_id: motherId,
+            father_id: fatherId,
+            spouses_ids: spousesIds.filter(Boolean),   // new
+            siblings_ids: siblingsIds.filter(Boolean),
+            grandmothers_ids: grandmothersIds.filter(Boolean),      // TODO fix setting nested fields
+            grandfathers_ids: grandfathersIds.filter(Boolean),      // TODO fix setting nested fields
+            individuals_ids: indIds.filter(e => e.individual_id),       // TODO fix error/warning
+        });
+        console.log('newIndividual is: ', newIndividual, " of type: ", typeof(newIndividual))
+        console.log('newIndividual_id is: ', newIndividual._id, " of type: ", typeof(newIndividual._id))
+        console.log('siblingsIds is: ', siblingsIds, " of type: ", typeof(siblingsIds))
+
+        const savesSuccessfully = await newIndividual.save();
+        return savesSuccessfully===newIndividual;
+    } catch {
+
+    }
+}
+ 
+//---------------------------------------------------------------------------------------------------------------------------------------------------
+// TODO reflect updates in other individuals' documents
+// TODO add input validation
+// NEW with transaction
+export async function addNewIndividual(modifiedFormData: {
+    first_name: string;
+    parent_name?: string;
+    grandparent_name?: string;
+    last_name?: string;
+    gender: string;
+    is_dead: string;
+    mother_id?: string;
+    father_id?: string;
+    spouses_ids?: { public_id: string; is_divorced: string }[];
+    siblings_ids?: { public_id: string; relationshipSide?: string }[];
+    grandmothers_ids?: { public_id: string; relationshipSide?: string }[];
+    grandfathers_ids?: { public_id: string; relationshipSide?: string }[];
+    children_ids?: { public_id: string; is_dead?: string }[];
+    individuals_ids?: { public_id: string; relationshipSide?: string; is_dead?: string; sex: string; additional_information?: string }[];
+}) {
+    if (modifiedFormData['first_name']===null || modifiedFormData['first_name']===undefined || modifiedFormData['first_name']===''
+        || modifiedFormData['gender']===null || modifiedFormData['gender']===undefined || modifiedFormData['gender']===''
+        || modifiedFormData['is_dead']===null || modifiedFormData['is_dead']===undefined || modifiedFormData['is_dead']==='') {
+        return false;
+    }
+    // console.log('spouces: ', spouses_ids?? null)
+    try {
+        const mongooseInstance = await dbConnect();
+        // TODO not sure about the await
+        return await mongooseInstance.connection.transaction(async function createNewIndividual(session: mongoose.ClientSession) {
+            const motherId = modifiedFormData.mother_id ? await resolvePublicId(modifiedFormData.mother_id, session)! : null;
+            const fatherId = modifiedFormData.father_id ? await resolvePublicId(modifiedFormData.father_id, session)! : null;
+            const spousesIds = modifiedFormData.spouses_ids 
+            ? modifiedFormData.spouses_ids.map((s) => ({      
+                spouse_id: resolvePublicId(s.public_id, session),
+                spouse_public_id: s.public_id,
+            }))
+            : [];
+            const siblingsIds = modifiedFormData.siblings_ids 
+            ? modifiedFormData.siblings_ids.map((s) => ({
+                sibling_id: resolvePublicId(s.public_id),
+                relationshipSide: s.relationshipSide ?? 'unknown',
+                sibling_public_id: s.public_id,
+            }))
+            : [];
+            const grandmothersIds = modifiedFormData.grandmothers_ids 
+            ? modifiedFormData.grandmothers_ids.map((s) => ({
+                grandmother_id: resolvePublicId(s.public_id, session),
+                relationshipSide: s.relationshipSide ?? 'unknown',
+                grandmother_public_id: s.public_id,
+            }))
+            : [];
+            const grandfathersIds = modifiedFormData.grandfathers_ids 
+            ? modifiedFormData.grandfathers_ids.map((s) => ({
+                grandfather_id: resolvePublicId(s.public_id, session),
+                relationshipSide: s.relationshipSide ?? 'unknown',
+                grandfather_public_id: s.public_id,
+            }))
+            : [];
+            const childrenIds = modifiedFormData.children_ids 
+            ? modifiedFormData.children_ids.map((s) => ({
+                child_id: resolvePublicId(s.public_id, session),
+            }))
+            : [];
+            const individualsIds = modifiedFormData.individuals_ids 
+            ? modifiedFormData.individuals_ids.map((s) => ({
+                individual_id: resolvePublicId(s.public_id, session),
+                relationshipSide: s.relationshipSide ?? 'unknown',
+                individual_public_id: s.public_id
+            }))
+            : [];
+
+            const newIndividual = new IndividualModel({
+                first_name: modifiedFormData['first_name'],
+                parent_name: modifiedFormData['parent_name'],
+                grandparent_name: modifiedFormData['grandparent_name'],
+                last_name: modifiedFormData['last_name'],
+                sex: modifiedFormData['gender'],
+                is_dead: modifiedFormData['is_dead'],
+                mother_id: motherId,
+                father_id: fatherId,
+                spouses_ids: spousesIds.filter(Boolean),   // new
+                siblings_ids: siblingsIds.filter(Boolean),
+                grandmothers_ids: grandmothersIds.filter(Boolean),      // TODO fix setting nested fields
+                grandfathers_ids: grandfathersIds.filter(Boolean),      // TODO fix setting nested fields
+                children_ids: childrenIds.filter(Boolean),
+                individuals_ids: individualsIds.filter(s => s.individual_id),       // TODO fix error/warning
+            });
+
+            const savedNewIndividualSuccessfully = await newIndividual.save({ session });
+            if (savedNewIndividualSuccessfully != newIndividual) {
+                throw new Error('An unexpected error occurred!');
+            }
+            return true;
+            //check if needed
+            // await updateReverseRelationships(newIndividual, { motherId, fatherId}, session)
+        })
+
+
+        const settledResults = await Promise.allSettled([
+            modifiedFormData.mother_id ? resolvePublicId(modifiedFormData.mother_id) : Promise.resolve(null),
+            modifiedFormData.father_id ? resolvePublicId(modifiedFormData.father_id) : Promise.resolve(null),
+            Promise.all((modifiedFormData.spouses_ids ?? []).map(async s => {
+                return {
+                    spouse_id: await resolvePublicId(s.public_id),
+                    // is_divorced: s.is_divorced ?? 'unknown',
+                    spouse_public_id: s.public_id,
+                }
+            })),
+            Promise.all((modifiedFormData.siblings_ids ?? []).map(async s => {
+                return {
+                    sibling_id: await resolvePublicId(s.public_id),
+                    relationshipSide: s.relationshipSide ?? 'unknown',
+                    sibling_public_id: s.public_id,
+                }
+            })),
+            Promise.all((modifiedFormData.grandmothers_ids ?? []).map(async s => {
+                return {
+                    grandmother_id: await resolvePublicId(s.public_id),
+                    relationshipSide: s.relationshipSide ?? 'unknown',
+                    grandmother_public_id: s.public_id,
+                }
+            })),
+            Promise.all((modifiedFormData.grandfathers_ids ?? []).map(async s => {
+                return {
+                    grandfather_id: await resolvePublicId(s.public_id),
+                    relationshipSide: s.relationshipSide ?? 'unknown',
+                    grandfather_public_id: s.public_id,
+                }
+            })),
+            Promise.all((modifiedFormData.individuals_ids ?? []).map(async e => ({
+                individual_id: await resolvePublicId(e.public_id),
+                relationshipSide: e.relationshipSide ?? 'unknown',
+                individual_public_id: e.public_id
+            }))),
+        ]);
+
+
+        const motherId = settledResults[0].status === 'fulfilled' ? settledResults[0].value : null;
+        const fatherId = settledResults[1].status === 'fulfilled' ? settledResults[1].value : null;
+        const spousesIds =settledResults[2].status === 'fulfilled' ? settledResults[2].value : [];
+        const siblingsIds =settledResults[3].status === 'fulfilled' ? settledResults[3].value : [];
+        const grandmothersIds =settledResults[4].status === 'fulfilled' ? settledResults[4].value : [];
+        const grandfathersIds =settledResults[5].status === 'fulfilled' ? settledResults[5].value : [];
+        const indIds =settledResults[6].status === 'fulfilled' ? settledResults[6].value : [];
 
         const newIndividual = new IndividualModel({
             first_name: modifiedFormData['first_name'],
@@ -112,6 +300,12 @@ export async function addNewIndividual(modifiedFormData: {
 
     }
 }
+
+
+
+
+
+//---------------------------------------------------------------------------------------------------------------------------------------------------
 
 
 export function getSpouseCandidateSexes(subjectSex: string): ('male' | 'female' | 'unknown')[] {
@@ -273,7 +467,7 @@ export async function getIndividualByPublicId(publicId: string) {       // TODO 
             mother_id: individual.mother_id ? relatedShape(individual.mother_id) : undefined,     // TODO fix relatedShape AND it should be mother name and public id only
             father_id: individual.father_id ? relatedShape(individual.father_id) : undefined,     // TODO fix relatedShape AND it should be father name and public id only
             siblings_ids: siblings_public_id_fullName_relationshipSide,     // TODO fix relatedShape AND it should be sibling name and public id only
-            // spouses_ids: (i.spouses_ids ?? []).map(relatedShape),     // TODO fix relatedShape AND it should be spouse name and public id only
+            spouses_ids: (individual.spouses_ids ?? []).map(relatedShape),     // TODO fix relatedShape AND it should be spouse name and public id only
             grandmothers_ids: grandmothersIds_public_id_fullName_relationshipSide,     // TODO fix relatedShape AND it should be grandmother name and public id only
             grandfathers_ids: grandfathersIds_public_id_fullName_relationshipSide,     // TODO fix relatedShape AND it should be grandfather name and public id only
             individuals_ids: individuals_ids_public_id_fullName_relationshipSide,     // TODO fix relatedShape AND it should be individual name and public id only

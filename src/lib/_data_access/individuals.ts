@@ -4,18 +4,48 @@ import dbConnect from "@/lib/dbConnect";
 import IndividualModel from "@/lib/database_models/individuals_model";
 import mongoose from "mongoose";
 
-async function updateReverseRelationships( newIndividualId, { motherId, fatherId, spouses, siblings, children }, session) {
+async function updateReverseRelationships(
+    newIndividualId: mongoose.Document,
+    sex: String,
+    session: mongoose.ClientSession,
+    motherId?: mongoose.Types.ObjectId,
+    fatherId?: mongoose.Types.ObjectId,
+    spousesIdsList?: {spouse_id: mongoose.Types.ObjectId; is_divorced?: String}[],
+    childrenIdsList?: {child_id: mongoose.Types.ObjectId}[]
+){
+    try {
+        // const newIndividualId = await IndividualModel.findOne()
+        const motherDocument = await IndividualModel.findOneAndUpdate({ _id: motherId }).session(session);
+        motherDocument.children_ids.push({ child_id: newIndividualId._id })
+        await motherDocument.save({ session })
 
-    // const newIndividualId = await IndividualModel.findOne()
-    const motherDocument = await IndividualModel.findOneAndUpdate({ _id: motherId}).session(session);
-    motherDocument.children_ids.push({child_id: newIndividualId._id})
-    await motherDocument.save({ session })
-    
-    const fatherDocument = await IndividualModel.findOneAndUpdate({ _id: fatherId}).session(session);
-    fatherDocument.children_ids.push({child_id: newIndividualId._id})
-    await fatherDocument.save({ session })
+        const fatherDocument = await IndividualModel.findOne({ _id: fatherId }).session(session);
+        fatherDocument.children_ids.push({ child_id: newIndividualId._id })
+        await fatherDocument.save({ session })
 
+        for (var spouceId of spousesIdsList ?? []) {
+            const spouceDocument = await IndividualModel.findOne({ _id: spouceId }).session(session);
+            spouceDocument.spouses_ids.push({ spouse_id: newIndividualId._id });
+            await spouceDocument.save({ session });
+        }
 
+        for (var childId of childrenIdsList ?? []) {
+            const childDocument = await IndividualModel.findOne({ _id: childId }).session(session);
+            // TODO update either father or mother of this childDocument depending on the gender of the new individual
+            if (sex == "male") {
+                childDocument.father_id = newIndividualId._id;
+                await childDocument.save({session})
+            } else if (sex == "female") {
+                childDocument.mother_id = newIndividualId._id;
+                await childDocument.save({session})
+            } else {
+                // TODO what should be there is the sex/gender of the new individual is unknown?
+            }
+        }
+        return true;
+    } catch {
+
+    }
 }
 
 async function resolvePublicId(publicId: string, session?: mongoose.ClientSession) {
@@ -133,7 +163,7 @@ export async function addNewIndividualNoACID(modifiedFormData: {
     }
 }
  
-//---------------------------------------------------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------START----------------------------------------------------------------------------
 // TODO reflect updates in other individuals' documents
 // TODO add input validation
 // NEW with transaction
@@ -153,12 +183,15 @@ export async function addNewIndividual(modifiedFormData: {
     children_ids?: { public_id: string; is_dead?: string }[];
     individuals_ids?: { public_id: string; relationshipSide?: string; is_dead?: string; sex: string; additional_information?: string }[];
 }) {
+
     if (modifiedFormData['first_name']===null || modifiedFormData['first_name']===undefined || modifiedFormData['first_name']===''
         || modifiedFormData['gender']===null || modifiedFormData['gender']===undefined || modifiedFormData['gender']===''
         || modifiedFormData['is_dead']===null || modifiedFormData['is_dead']===undefined || modifiedFormData['is_dead']==='') {
         return false;
     }
-    // console.log('spouces: ', spouses_ids?? null)
+
+    console.log('spouces: ', modifiedFormData.spouses_ids)
+    
     try {
         const mongooseInstance = await dbConnect();
         // TODO not sure about the await
@@ -166,18 +199,50 @@ export async function addNewIndividual(modifiedFormData: {
             const motherId = modifiedFormData.mother_id ? await resolvePublicId(modifiedFormData.mother_id, session)! : null;
             const fatherId = modifiedFormData.father_id ? await resolvePublicId(modifiedFormData.father_id, session)! : null;
             const spousesIds = modifiedFormData.spouses_ids 
-            ? modifiedFormData.spouses_ids.map((s) => ({      
-                spouse_id: resolvePublicId(s.public_id, session),
+            ? modifiedFormData.spouses_ids.map(async (s) => ({      
+                spouse_id: await resolvePublicId(s.public_id),
                 spouse_public_id: s.public_id,
             }))
             : [];
+            var spousesIdsList: { spouse_id: mongoose.Types.ObjectId; is_divorced?: String}[] = []
+            for (var spouseStringId of modifiedFormData.spouses_ids?? []) {
+                try {
+                    const spouse = await IndividualModel.findOne({ public_id: spouseStringId }).select('_id').session(session).lean();
+                    spousesIdsList.push({
+                        spouse_id: spouse._id,
+                        is_divorced: 'unkown'
+                    })
+                } catch {
+
+                } finally {
+
+                }
+            }
+            console.log('spousesIdsList: ', spousesIdsList)
+            // console.log('spousesIds are: ', spousesIds, ' of type ', typeof(spousesIds))
+
             const siblingsIds = modifiedFormData.siblings_ids 
             ? modifiedFormData.siblings_ids.map((s) => ({
-                sibling_id: resolvePublicId(s.public_id),
+                sibling_id: resolvePublicId(s.public_id, session),
                 relationshipSide: s.relationshipSide ?? 'unknown',
                 sibling_public_id: s.public_id,
             }))
             : [];
+
+            var siblingsIdsList = [];
+            for (var siblingsStringId of modifiedFormData.siblings_ids?? []) {
+                try {
+                    const sibling = await IndividualModel.findOne({ public_id: siblingsStringId }).select('_id').session(session).lean();
+                    siblingsIdsList.push({
+                        sibling_id: sibling._id
+                    })
+                } catch {
+
+                } finally {
+
+                }
+            }
+
             const grandmothersIds = modifiedFormData.grandmothers_ids 
             ? modifiedFormData.grandmothers_ids.map((s) => ({
                 grandmother_id: resolvePublicId(s.public_id, session),
@@ -185,6 +250,21 @@ export async function addNewIndividual(modifiedFormData: {
                 grandmother_public_id: s.public_id,
             }))
             : [];
+            
+            var grandmothersIdsList = [];
+            for (var grandmotherStringId of modifiedFormData.grandmothers_ids ?? []) {
+                try {
+                    const grandmother = await IndividualModel.findOne({ public_id: grandmotherStringId }).select('_id').session(session).lean();
+                    grandmothersIdsList.push({
+                        grandmother_id: grandmother.child_id
+                    })
+                } catch {
+
+                } finally {
+
+                }
+            }
+
             const grandfathersIds = modifiedFormData.grandfathers_ids 
             ? modifiedFormData.grandfathers_ids.map((s) => ({
                 grandfather_id: resolvePublicId(s.public_id, session),
@@ -192,11 +272,41 @@ export async function addNewIndividual(modifiedFormData: {
                 grandfather_public_id: s.public_id,
             }))
             : [];
+
+            var grandfatherIdsList = [];
+            for (var grandfatherStringId of modifiedFormData.grandfathers_ids ?? []) {
+                try {
+                    const grandfather = await IndividualModel.findOne({ public_id: grandfatherStringId }).select('_id').session(session).lean();
+                    grandfatherIdsList.push({
+                        grandfather_id: grandfather._id
+                    })
+                } catch {
+
+                } finally {
+
+                }
+            }
+
             const childrenIds = modifiedFormData.children_ids 
             ? modifiedFormData.children_ids.map((s) => ({
                 child_id: resolvePublicId(s.public_id, session),
             }))
             : [];
+
+            var childrenIdsList: {child_id: mongoose.Types.ObjectId}[] = [];
+            for (var childStringID of modifiedFormData.children_ids ?? []) {
+                try {
+                    const child = await IndividualModel.findOne({ public_id: childStringID }).select('_id').session(session).lean();
+                    childrenIdsList.push({
+                        child_id: child._id
+                    })
+                } catch {
+
+                } finally {
+
+                }
+            }
+
             const individualsIds = modifiedFormData.individuals_ids 
             ? modifiedFormData.individuals_ids.map((s) => ({
                 individual_id: resolvePublicId(s.public_id, session),
@@ -204,6 +314,20 @@ export async function addNewIndividual(modifiedFormData: {
                 individual_public_id: s.public_id
             }))
             : [];
+
+            var individualsIdsList = [];
+            for (var individualStringID of modifiedFormData.individuals_ids ?? []) {
+                try {
+                    const individual = await IndividualModel.findOne({ public_id: individualStringID }).select('_id').session(session).lean();
+                    individualsIdsList.push({
+                        individual_id: individual._id
+                    })
+                } catch {
+
+                } finally {
+
+                }
+            }
 
             const newIndividual = new IndividualModel({
                 first_name: modifiedFormData['first_name'],
@@ -214,98 +338,41 @@ export async function addNewIndividual(modifiedFormData: {
                 is_dead: modifiedFormData['is_dead'],
                 mother_id: motherId,
                 father_id: fatherId,
-                spouses_ids: spousesIds.filter(Boolean),   // new
-                siblings_ids: siblingsIds.filter(Boolean),
-                grandmothers_ids: grandmothersIds.filter(Boolean),      // TODO fix setting nested fields
-                grandfathers_ids: grandfathersIds.filter(Boolean),      // TODO fix setting nested fields
-                children_ids: childrenIds.filter(Boolean),
-                individuals_ids: individualsIds.filter(s => s.individual_id),       // TODO fix error/warning
+                spouses_ids: spousesIdsList.filter(Boolean),   // new
+                siblings_ids: siblingsIdsList.filter(Boolean),
+                grandmothers_ids: grandmothersIdsList.filter(Boolean),      // TODO fix setting nested fields
+                grandfathers_ids: grandfatherIdsList.filter(Boolean),      // TODO fix setting nested fields
+                children_ids: childrenIdsList.filter(Boolean),
+                // individuals_ids: individualsIds.filter(s => s.individual_id),       // TODO fix error/warning
+                individuals_ids: individualsIdsList.filter(Boolean),       // TODO fix error/warning
             });
-
+            
             const savedNewIndividualSuccessfully = await newIndividual.save({ session });
+            console.log('treuuuuuuuu')
+
             if (savedNewIndividualSuccessfully != newIndividual) {
                 throw new Error('An unexpected error occurred!');
             }
+
+            //check if needed before calling
+            await updateReverseRelationships(newIndividual, modifiedFormData['gender'], session, motherId, fatherId, spousesIdsList, childrenIdsList);
+
+
             return true;
+
             //check if needed
             // await updateReverseRelationships(newIndividual, { motherId, fatherId}, session)
+
         })
-
-
-        const settledResults = await Promise.allSettled([
-            modifiedFormData.mother_id ? resolvePublicId(modifiedFormData.mother_id) : Promise.resolve(null),
-            modifiedFormData.father_id ? resolvePublicId(modifiedFormData.father_id) : Promise.resolve(null),
-            Promise.all((modifiedFormData.spouses_ids ?? []).map(async s => {
-                return {
-                    spouse_id: await resolvePublicId(s.public_id),
-                    // is_divorced: s.is_divorced ?? 'unknown',
-                    spouse_public_id: s.public_id,
-                }
-            })),
-            Promise.all((modifiedFormData.siblings_ids ?? []).map(async s => {
-                return {
-                    sibling_id: await resolvePublicId(s.public_id),
-                    relationshipSide: s.relationshipSide ?? 'unknown',
-                    sibling_public_id: s.public_id,
-                }
-            })),
-            Promise.all((modifiedFormData.grandmothers_ids ?? []).map(async s => {
-                return {
-                    grandmother_id: await resolvePublicId(s.public_id),
-                    relationshipSide: s.relationshipSide ?? 'unknown',
-                    grandmother_public_id: s.public_id,
-                }
-            })),
-            Promise.all((modifiedFormData.grandfathers_ids ?? []).map(async s => {
-                return {
-                    grandfather_id: await resolvePublicId(s.public_id),
-                    relationshipSide: s.relationshipSide ?? 'unknown',
-                    grandfather_public_id: s.public_id,
-                }
-            })),
-            Promise.all((modifiedFormData.individuals_ids ?? []).map(async e => ({
-                individual_id: await resolvePublicId(e.public_id),
-                relationshipSide: e.relationshipSide ?? 'unknown',
-                individual_public_id: e.public_id
-            }))),
-        ]);
-
-
-        const motherId = settledResults[0].status === 'fulfilled' ? settledResults[0].value : null;
-        const fatherId = settledResults[1].status === 'fulfilled' ? settledResults[1].value : null;
-        const spousesIds =settledResults[2].status === 'fulfilled' ? settledResults[2].value : [];
-        const siblingsIds =settledResults[3].status === 'fulfilled' ? settledResults[3].value : [];
-        const grandmothersIds =settledResults[4].status === 'fulfilled' ? settledResults[4].value : [];
-        const grandfathersIds =settledResults[5].status === 'fulfilled' ? settledResults[5].value : [];
-        const indIds =settledResults[6].status === 'fulfilled' ? settledResults[6].value : [];
-
-        const newIndividual = new IndividualModel({
-            first_name: modifiedFormData['first_name'],
-            parent_name: modifiedFormData['parent_name'],
-            grandparent_name: modifiedFormData['grandparent_name'],
-            last_name: modifiedFormData['last_name'],
-            sex: modifiedFormData['gender'],
-            is_dead: modifiedFormData['is_dead'],
-            mother_id: motherId,
-            father_id: fatherId,
-            spouses_ids: spousesIds.filter(Boolean),   // new
-            siblings_ids: siblingsIds.filter(Boolean),
-            grandmothers_ids: grandmothersIds.filter(Boolean),      // TODO fix setting nested fields
-            grandfathers_ids: grandfathersIds.filter(Boolean),      // TODO fix setting nested fields
-            individuals_ids: indIds.filter(e => e.individual_id),       // TODO fix error/warning
-        });
-        const savesSuccessfully = await newIndividual.save();
-        return savesSuccessfully===newIndividual;
-    } catch {
+    } catch (e) {
+        console.log('Error is: ', e)
+    } finally {
 
     }
 }
 
 
-
-
-
-//---------------------------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------END-----------------------------------------------------------------------------
 
 
 export function getSpouseCandidateSexes(subjectSex: string): ('male' | 'female' | 'unknown')[] {

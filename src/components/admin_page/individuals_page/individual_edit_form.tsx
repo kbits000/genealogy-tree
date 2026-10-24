@@ -96,6 +96,8 @@ export default function IndividualEditForm({
     const [motherId, setMotherId] = useState<Option | null>(individual.mother_id ? toOption(individual.mother_id) : null);
     const [fatherId, setFatherId] = useState<Option | null>(individual.father_id ? toOption(individual.father_id) : null);
     const [spousesIds, setSpousesIds] = useState<Option[]>((individual.spouses_ids ?? []).map(toOption));
+    // TODO add children options
+    // const [childrenIds, setChildrenIds] = useState<Option[]>((individual.children_ids ?? []).map(toOption));
     const [siblingsIds, setSiblingsIds] = useState<Option[]>((individual.siblings_ids ?? []).map(toOption));
     const [grandmothersIds, setGrandmothersIds] = useState<Option[]>((individual.grandmothers_ids ?? []).map(toOption));
     const [grandfathersIds, setGrandfathersIds] = useState<Option[]>((individual.grandfathers_ids ?? []).map(toOption));
@@ -176,6 +178,7 @@ export default function IndividualEditForm({
                 <input type="hidden" name="mother_id_field"      value={motherId?.public_id ?? ''} readOnly />
                 <input type="hidden" name="father_id_field"      value={fatherId?.public_id ?? ''} readOnly />
                 <input type="hidden" name="spouses_ids_field"   value={JSON.stringify(spousesIds.map(o => o.public_id))} readOnly />
+                {/* <input type="hidden" name="children_ids_field"   value={JSON.stringify(spousesIds.map(o => o.public_id))} readOnly /> */}
                 <input type="hidden" name="siblings_ids_field"   value={JSON.stringify(siblingsIds.map(o => o.public_id))} readOnly />
                 <input type="hidden" name="grandmother_id_field" value={JSON.stringify(grandmothersIds.map(o => o.public_id))} readOnly />
                 <input type="hidden" name="grandfather_id_field" value={JSON.stringify(grandfathersIds.map(o => o.public_id))} readOnly />
@@ -298,6 +301,13 @@ export default function IndividualEditForm({
                         onChange={(_, v) => setSpousesIds(v)}
                         renderInput={(params) => <TextField {...params} label="الأزواج" />}
                     />
+                    {/* <Autocomplete
+                        multiple
+                        options={childrenIds}
+                        value={childrenIds}
+                        onChange={(_, v) => setChildrenIds(v)}
+                        renderInput={(params) => <TextField {...params} label="الأبناء" />}
+                    /> */}
                     <Autocomplete
                         multiple
                         options={allIndividuals}

@@ -691,16 +691,43 @@ export async function updateIndividualWithTransaction(publicId: string, data: { 
             const individual = await IndividualModel.findOne({ public_id: publicId });
             if (!individual) return false;
 
-            const motherId = data.mother_id ? resolvePublicId(data.mother_id, session) : null;
-            const fatherId = data.father_id ? resolvePublicId(data.father_id, session) : null;
+            const motherId = data.mother_id ? await resolvePublicId(data.mother_id, session) : null;
+            const fatherId = data.father_id ? await resolvePublicId(data.father_id, session) : null;
 
             var spousesIdsList = [];
             for (var spouseStringId of data.spouses_ids ?? []) {
-                const resolveResult = resolvePublicId(spouseStringId.public_id, session);
+                const resolveResult = await resolvePublicId(spouseStringId.public_id, session);
                 spousesIdsList.push({spouse_id: resolveResult, is_divorced: spouseStringId.is_divorced});
             }
 
             var childrenIdsList = [];
+            for (var childStringId of data.children_ids ?? []) {
+                const resolveResult = await resolvePublicId(childStringId.public_id, session);
+                childrenIdsList.push({child_id: resolveResult})
+            }
+
+            individual.first_name = data.first_name;
+            individual.parent_name = data.parent_name;
+            individual.grandparent_name = data.grandparent_name;
+            individual.last_name = data.last_name;
+            individual.sex = data.gender;
+            individual.is_dead = data.is_dead;
+            individual.mother_id = motherId;
+            individual.father_id = fatherId;
+            individual.spouses_ids = spousesIdsList.filter(Boolean);
+            // individual.siblings_ids = siblingsIds.filter(Boolean);
+            // individual.grandmothers_ids = grandmothersIds.filter(Boolean);
+            // individual.grandfathers_ids = grandfathersIds.filter(Boolean);
+            individual.children_ids = childrenIdsList.filter(Boolean);
+            // individual.individuals_ids = indIds.filter(e => e.individual_id);
+            const result = await individual.save({ session });
+            if (result != individual) {
+                return false;
+            }
+
+            await updateReverseRelationships(individual, individual.sex, session, motherId, fatherId, spousesIdsList, childrenIdsList)
+
+            return true;
         })
 
         //              START

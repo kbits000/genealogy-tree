@@ -51,6 +51,7 @@ export default function IndividualSubmissionForm({
     const [siblingsIds, setSiblingsIds] = useState<{ sibling: Option | null; relationshipSide: string }[]>([]);
     const [grandmothersIds, setGrandmothersIds] = useState<{ grandmother: Option | null; relationshipSide: string }[]>([]); // TODO grandmothersIds and grandfathersIds are not of type Option. They are of type {public_id:string;label:string;relationshipSide:string;}
     const [grandfathersIds, setGrandfathersIds] = useState<{ grandfather: Option | null; relationshipSide: string }[]>([]);
+    const [childrenIds, setChildrenIds] = useState<Option[]>([]);
     const [individualsIds, setIndividualsIds] = useState<{ individual: Option | null; relationship: string }[]>([]);
         
 
@@ -70,6 +71,7 @@ export default function IndividualSubmissionForm({
             <input type="hidden" name="mother_id_field"      value={motherId?.public_id ?? ''} readOnly />
             <input type="hidden" name="father_id_field"      value={fatherId?.public_id ?? ''} readOnly />
             <input type="hidden" name="spouses_ids_field"   value={JSON.stringify(spousesIds.map(o => o.public_id))} readOnly />
+            <input type="hidden" name="children_ids_field" value={JSON.stringify(childrenIds.map(o => o.public_id))} readOnly />
             <input type="hidden" name="siblings_ids_field"   value={JSON.stringify(
                 siblingsIds.filter(e => e.sibling).map(e => ({ public_id: e.sibling!.public_id, relationshipSide: e.relationshipSide }))
                 )} readOnly />
@@ -143,6 +145,13 @@ export default function IndividualSubmissionForm({
                     value={spousesIds}
                     onChange={(_, v) => setSpousesIds(v)}
                     renderInput={(params) => <TextField {...params} label="الأزواج" />}
+                />
+                <Autocomplete
+                    multiple
+                    options={allIndividuals.filter(Boolean)}
+                    value={childrenIds}
+                    onChange={(_, v) => setChildrenIds(v)}
+                    renderInput={(params) => <TextField {...params} label="الابناء" />}
                 />
                 <Box>
                     <FormLabel>الإخوة والأخوات</FormLabel>

@@ -189,8 +189,6 @@ export async function addNewIndividual(modifiedFormData: {
         || modifiedFormData['is_dead']===null || modifiedFormData['is_dead']===undefined || modifiedFormData['is_dead']==='') {
         return false;
     }
-
-    console.log('spouces: ', modifiedFormData.spouses_ids)
     
     try {
         const mongooseInstance = await dbConnect();
@@ -366,8 +364,7 @@ export async function addNewIndividual(modifiedFormData: {
         })
     } catch (e) {
         console.log('Error is: ', e)
-    } finally {
-
+        return false;
     }
 }
 
@@ -664,6 +661,102 @@ export async function updateIndividual(publicId: string, data: {        // TODO 
         return false;
     }
 }
+
+
+//----------------------------------------------------START-----------------------------------------------------------------
+// TODO reflect updates in other individuals' documents
+// Add children
+export async function updateIndividualWithTransaction(publicId: string, data: {        // TODO data? ModifiedFormData
+    first_name: string;
+    parent_name?: string;
+    grandparent_name?: string;
+    last_name?: string;
+    gender: string;
+    is_dead: string;
+    mother_id?: string;
+    father_id?: string;
+    spouses_ids?: { public_id: string; is_divorced: string }[];
+    siblings_ids?: { public_id: string; sibling_side: string }[];
+    grandmothers_id?: { public_id: string; mother_of: string }[];
+    grandfathers_id?: { public_id: string; father_of: string }[];
+    children_ids?: { public_id: string; }[];
+    individuals_ids?: { public_id?: string; relationship?: string; is_dead?: string; sex: string; additional_information?: string }[];
+}) {
+    // check if there is even data passed or not before entering try/catch
+
+    try {
+        const mongooseInstance = await dbConnect();
+
+        await mongooseInstance.connection.transaction(async function (session: mongoose.ClientSession) {
+            const individual = await IndividualModel.findOne({ public_id: publicId });
+            if (!individual) return false;
+
+            const motherId = data.mother_id ? resolvePublicId(data.mother_id, session) : null;
+            const fatherId = data.father_id ? resolvePublicId(data.father_id, session) : null;
+
+            var spousesIdsList = [];
+            for (var spouseStringId of data.spouses_ids ?? []) {
+                const resolveResult = resolvePublicId(spouseStringId.public_id, session);
+                spousesIdsList.push({spouse_id: resolveResult, is_divorced: spouseStringId.is_divorced});
+            }
+
+            var childrenIdsList = [];
+        })
+
+        //              START
+        const settledResults = await Promise.allSettled([
+            Promise.all((data.siblings_ids ?? []).map(s => resolvePublicId(s.public_id))),
+            Promise.all((data.grandmothers_id ?? []).map(async s => {
+                const resolvedId = await resolvePublicId(s.public_id);
+                return {
+                    grandmother_id: resolvedId,
+                    mother_of: s.mother_of
+                }
+            })),
+            Promise.all((data.grandfathers_id ?? []).map(async s => {
+                const resolvedId = await resolvePublicId(s.public_id);
+                return {
+                    grandfather_id: resolvedId,
+                    father_of: s.father_of
+                }
+            })),
+            Promise.all((data.individuals_ids ?? []).map(async e => ({
+                individual_id: e.public_id ? await resolvePublicId(e.public_id) : null,
+                relationship: e.relationship,
+            }))),
+        ]);
+
+
+        const siblingsIds =settledResults[0].status === 'fulfilled' ? settledResults[0].value : [];
+        const grandmothersIds =settledResults[1].status === 'fulfilled' ? settledResults[1].value : [];
+        const grandfathersIds =settledResults[2].status === 'fulfilled' ? settledResults[2].value : [];
+        const indIds =settledResults[3].status === 'fulfilled' ? settledResults[3].value : [];
+
+        //              END
+
+        individual.first_name = data.first_name;
+        individual.parent_name = data.parent_name;
+        individual.grandparent_name = data.grandparent_name;
+        individual.last_name = data.last_name;
+        individual.sex = data.gender;
+        individual.is_dead = data.is_dead;
+        individual.mother_id = motherId;
+        individual.father_id = fatherId;
+        individual.spouses_ids = spousesIds.filter(Boolean);
+        individual.siblings_ids = siblingsIds.filter(Boolean);
+        individual.grandmothers_ids = grandmothersIds.filter(Boolean);
+        individual.grandfathers_ids = grandfathersIds.filter(Boolean);
+        individual.individuals_ids = indIds.filter(e => e.individual_id);
+
+        const result = await individual.save();
+        return result === individual;
+    } catch {
+        return false;
+    }
+}
+
+
+//----------------------------------------------------END-------------------------------------------------------------------
 
 
 export async function deleteIndividual(publicId: string) {

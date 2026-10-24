@@ -25,6 +25,7 @@ export async function addNewIndividualServerAction(rawFormData: FormData) {
         grandmothers_ids: JSON.parse(rawFormData.get('grandmothers_ids_field') as string || '[]'),
         grandfathers_ids: JSON.parse(rawFormData.get('grandfathers_ids_field') as string || '[]'),
         individuals_ids: JSON.parse(rawFormData.get('individuals_ids_field') as string || '[]'),
+        children_ids: JSON.parse(rawFormData.get('children_ids_field') as string || '[]')
     };
     // modifiedFormData['gender'] = modifiedFormData['gender'] === 'ذكر' ? 'male' : modifiedFormData['gender'] === 'أنثى' ? 'female' : 'unknown';
     // modifiedFormData['is_dead'] = modifiedFormData['is_dead'] === 'حي' ? 'alive' : modifiedFormData['is_dead'] === 'متوفى' ? 'dead' : 'unknown';

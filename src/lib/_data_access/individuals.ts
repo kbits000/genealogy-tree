@@ -527,7 +527,7 @@ export async function getIndividualByPublicId(publicId: string) {       // TODO 
 }
 
 // TODO reflect updates in other individuals' documents
-export async function updateIndividual(publicId: string, data: {        // TODO data? ModifiedFormData
+export async function updateIndividualWithNoTransaction(publicId: string, data: {        // TODO data? ModifiedFormData
     first_name: string;
     parent_name?: string;
     grandparent_name?: string;
@@ -610,7 +610,7 @@ export async function updateIndividual(publicId: string, data: {        // TODO 
 //----------------------------------------------------START-----------------------------------------------------------------
 // TODO reflect updates in other individuals' documents
 // Add children
-export async function updateIndividualWithTransaction(publicId: string, data: {        // TODO data? ModifiedFormData
+export async function updateIndividual(publicId: string, data: {        // TODO data? ModifiedFormData
     first_name: string;
     parent_name?: string;
     grandparent_name?: string;

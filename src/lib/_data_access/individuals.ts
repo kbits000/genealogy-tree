@@ -237,8 +237,7 @@ export async function addNewIndividualNoACID(modifiedFormData: {
         const grandmothersIds =settledResults[4].status === 'fulfilled' ? settledResults[4].value : [];
         const grandfathersIds =settledResults[5].status === 'fulfilled' ? settledResults[5].value : [];
         const indIds =settledResults[6].status === 'fulfilled' ? settledResults[6].value : [];
-        // console.log('motherId is: ', motherId)
-        // console.log('motherId TYPE is: ', typeof(motherId))
+
         const newIndividual = new IndividualModel({
             first_name: modifiedFormData['first_name'],
             parent_name: modifiedFormData['parent_name'],
@@ -380,7 +379,6 @@ export async function addNewIndividual(modifiedFormData: {
                 childrenIdsList: childrenIdsList
             })
 
-            // return updated === true;
             if (updated != true) {
                 throw new Error("error"); // TODO What should I throw?
             }
@@ -446,16 +444,6 @@ export async function getIndividualByPublicId(publicId: string) {       // TODO 
     try {
         await dbConnect();
         const individual = await IndividualModel.findOne({ public_id: publicId}).lean();
-        // .select(' public_id first_name parent_name grandparent_name last_name sex is_dead '     // NOTE: a whitespace after the last field is a MUST
-        //     + 'mother_id father_id spouses_ids siblings_ids grandmothers_ids grandfathers_ids individuals_ids '
-        // )
-        //     .populate('spouses_ids.spouse_id', 'public_id first_name parent_name last_name')
-        //     .populate('siblings_ids.sibling_id', 'public_id first_name parent_name last_name')
-        //     .populate('grandmothers_ids.grandmother_id', 'public_id first_name parent_name last_name')
-        //     .populate('grandfathers_ids.grandfather_id', 'public_id first_name parent_name last_name')
-        //     .populate('individuals_ids.individual_id', 'public_id first_name parent_name last_name')
-        //     .lean();
-
 
         if (!individual) return null;
         console.log('individual: ', individual);
@@ -475,21 +463,6 @@ export async function getIndividualByPublicId(publicId: string) {       // TODO 
         const siblingsIds =settledResults[3].status === 'fulfilled' ? settledResults[3].value : [];
         const grandmothersIds =settledResults[4].status === 'fulfilled' ? settledResults[4].value : [];
         const grandfathersIds =settledResults[5].status === 'fulfilled' ? settledResults[5].value : [];
-
-        console.log('motherId: ', motherId);
-        console.log('fatherId: ', fatherId);
-        console.log('spousesIds: ', spousesIds);
-        console.log('siblingsIds: ', siblingsIds);
-        console.log('grandmothersIds: ', grandmothersIds);
-        console.log('grandfathersIds: ', grandfathersIds);
-
-
-        // const mother_public_id_fullName_object = await IndividualModel.findOne({ _id: individual.mother_id }).select(' public_id first_name parent_name grandparent_name last_name -_id').lean();
-        // const mother_fullName = [mother_public_id_fullName_object.first_name, mother_public_id_fullName_object.parent_name, mother_public_id_fullName_object.grandparent_name, mother_public_id_fullName_object.last_name].filter(Boolean).join(' ');
-        // const mother_public_id_fullName = {
-        //     public_id: String(mother_public_id_fullName_object.public_id),
-        //     fullName: mother_fullName,
-        // }
 
         const grandmothersIds_public_id_fullName_relationshipSide = await Promise.all(individual.grandmothers_ids.map(async (g) => {
             const individualFullNameObject = await IndividualModel.findOne({ _id: g.grandmother_id }).select(' first_name parent_name grandparent_name last_name -_id').lean();
@@ -511,8 +484,6 @@ export async function getIndividualByPublicId(publicId: string) {       // TODO 
                 relationshipSide: g.relationshipSide ?? 'unknown',
             }
         }))
-        console.log('grandfathersIds_public_id_fullName_relationshipSide: ', grandfathersIds_public_id_fullName_relationshipSide);
-
 
         const siblings_public_id_fullName_relationshipSide = await Promise.all(individual.siblings_ids.map(async (g) => {
             const siblingFullNameObject = await IndividualModel.findOne({ _id: g.sibling_id }).select(' first_name parent_name grandparent_name last_name -_id').lean();
@@ -523,8 +494,6 @@ export async function getIndividualByPublicId(publicId: string) {       // TODO 
                 relationshipSide: g.relationshipSide ?? 'unknown',
             }
         }))
-        console.log('siblings_public_id_fullName_relationshipSide: ', siblings_public_id_fullName_relationshipSide);
-
 
         const individuals_ids_public_id_fullName_relationshipSide = await Promise.all(individual.individuals_ids.map(async (i) => {
             const individualFullNameObject = await IndividualModel.findOne({ _id: i.individual_id }).select(' first_name parent_name grandparent_name last_name -_id').lean();
@@ -536,17 +505,6 @@ export async function getIndividualByPublicId(publicId: string) {       // TODO 
         }))
         console.log('individuals_ids_public_id_fullName_relationshipSide: ', individuals_ids_public_id_fullName_relationshipSide);
 
-        
-        // const i = individual as typeof individual & {
-        //     mother_id?: { public_id: unknown; first_name: string; parent_name?: string } | null;
-        //     father_id?: { public_id: unknown; first_name: string; parent_name?: string } | null;
-        //     siblings_ids?: { public_id: unknown; first_name: string; parent_name?: string }[];
-        //     spouses_ids: { public_id: unknown; first_name: string; parent_name?: string }[];
-        //     // grandmothers_ids?: { public_id: unknown; first_name: string; parent_name?: string }[];
-        //     grandfathers_ids?: { public_id: unknown; first_name: string; parent_name?: string }[];
-        //     individuals_ids?: { individual_id: { public_id: unknown; first_name: string; parent_name?: string } | null; relationship: string }[];
-        // };
-        // console.log('i: ', i);
         return {
             public_id: String(individual.public_id),
             first_name: individual.first_name,
@@ -589,47 +547,6 @@ export async function updateIndividual(publicId: string, data: {        // TODO 
         await dbConnect();
         const individual = await IndividualModel.findOne({ public_id: publicId });
         if (!individual) return false;
-
-        // const [motherId, fatherId, wivesIds, husbandsIds, siblingsIds, grandmothersIds, grandfathersIds, indIds] =
-        //     await Promise.all([
-        //         data.mother_id ? resolvePublicId(data.mother_id) : Promise.resolve(null),
-        //         data.father_id ? resolvePublicId(data.father_id) : Promise.resolve(null),
-        //         // Promise.all((data.wives_ids ?? []).map(resolvePublicId)),
-        //         // Promise.all((data.husbands_ids ?? []).map(resolvePublicId)),
-        //         Promise.all((data.siblings_ids ?? []).map(resolvePublicId)),
-        //         Promise.all((data.grandmothers_ids ?? []).map(resolvePublicId)),
-        //         Promise.all((data.grandfathers_ids ?? []).map(resolvePublicId)),
-        //         Promise.all((data.individuals_ids ?? []).map(async e => ({
-        //             individual_id: await resolvePublicId(e.public_id),
-        //             relationship: e.relationship,
-        //         }))),
-        //     ]);
-
-
-        // const settledResults = await Promise.allSettled([
-        //     data.mother_id ? resolvePublicId(data.mother_id) : Promise.resolve(null),
-        //     data.father_id ? resolvePublicId(data.father_id) : Promise.resolve(null),
-        //     Promise.all((data.spouses_ids ?? [])),
-        //     Promise.all((data.siblings_ids ?? [])),
-        //     Promise.all((data.grandmothers_ids ?? [])),
-        //     Promise.all((data.grandfathers_ids ?? [])),
-        //     Promise.all((data.individuals_ids ?? []).map(async e => ({
-        //         individual_id: e.public_id ?? null,
-        //         relationship: e.relationship ?? null,
-        //     }))),
-        // ]);
-        //
-        // const getSettleValue = (result: any, fallback: any) =>
-        //     result.status === 'fulfilled' ? result.value : fallback;
-        //
-        //
-        // const motherId        = getSettleValue(settledResults[0], null);
-        // const fatherId        = getSettleValue(settledResults[1], null);
-        // const spousesIds      = getSettleValue(settledResults[2], []);
-        // const siblingsIds     = getSettleValue(settledResults[3], []);
-        // const grandmothersIds = getSettleValue(settledResults[4], []);
-        // const grandfathersIds = getSettleValue(settledResults[5], []);
-        // const indIds          = getSettleValue(settledResults[6], []);
 
         //              START
         const settledResults = await Promise.allSettled([
@@ -776,8 +693,6 @@ export async function updateIndividualWithTransaction(publicId: string, data: { 
                 return false;
             }
 
-            // const updated = await updateReverseRelationships(individual, individual.sex, session, motherId, fatherId, spousesIdsList, childrenIdsList)
-
             const updated = await updateReverseRelationships({
                 targetIndividualId: individual,
                 sex: individual.sex,
@@ -788,60 +703,12 @@ export async function updateIndividualWithTransaction(publicId: string, data: { 
                 childrenIdsList: childrenIdsList
             })
 
-            // return updated === true;
             if (updated != true) {
                 throw new Error("error");  // TODO What should I throw?
             }
             return true;
         })
-
-        //              START
-        // const settledResults = await Promise.allSettled([
-        //     Promise.all((data.siblings_ids ?? []).map(s => resolvePublicId(s.public_id))),
-        //     Promise.all((data.grandmothers_id ?? []).map(async s => {
-        //         const resolvedId = await resolvePublicId(s.public_id);
-        //         return {
-        //             grandmother_id: resolvedId,
-        //             mother_of: s.mother_of
-        //         }
-        //     })),
-        //     Promise.all((data.grandfathers_id ?? []).map(async s => {
-        //         const resolvedId = await resolvePublicId(s.public_id);
-        //         return {
-        //             grandfather_id: resolvedId,
-        //             father_of: s.father_of
-        //         }
-        //     })),
-        //     Promise.all((data.individuals_ids ?? []).map(async e => ({
-        //         individual_id: e.public_id ? await resolvePublicId(e.public_id) : null,
-        //         relationship: e.relationship,
-        //     }))),
-        // ]);
-
-
-        // const siblingsIds =settledResults[0].status === 'fulfilled' ? settledResults[0].value : [];
-        // const grandmothersIds =settledResults[1].status === 'fulfilled' ? settledResults[1].value : [];
-        // const grandfathersIds =settledResults[2].status === 'fulfilled' ? settledResults[2].value : [];
-        // const indIds =settledResults[3].status === 'fulfilled' ? settledResults[3].value : [];
-
-        // //              END
-
-        // individual.first_name = data.first_name;
-        // individual.parent_name = data.parent_name;
-        // individual.grandparent_name = data.grandparent_name;
-        // individual.last_name = data.last_name;
-        // individual.sex = data.gender;
-        // individual.is_dead = data.is_dead;
-        // individual.mother_id = motherId;
-        // individual.father_id = fatherId;
-        // individual.spouses_ids = spousesIds.filter(Boolean);
-        // individual.siblings_ids = siblingsIds.filter(Boolean);
-        // individual.grandmothers_ids = grandmothersIds.filter(Boolean);
-        // individual.grandfathers_ids = grandfathersIds.filter(Boolean);
-        // individual.individuals_ids = indIds.filter(e => e.individual_id);
-
-        // const result = await individual.save();
-        // return result === individual;
+        
     } catch {
         return false;
     }
@@ -917,8 +784,6 @@ export async function getIndividualDetails(publicId: string) {       // TODO add
         const i = ind as typeof ind & {
             mother_id?: { public_id: unknown; first_name: string; parent_name?: string } | null;
             father_id?: { public_id: unknown; first_name: string; parent_name?: string } | null;
-            // wives_ids?: { public_id: unknown; first_name: string; parent_name?: string }[];
-            // husbands_ids?: { public_id: unknown; first_name: string; parent_name?: string }[];
             siblings_ids?: { public_id: unknown; first_name: string; parent_name?: string }[];
             grandmothers_ids?: { public_id: unknown; first_name: string; parent_name?: string }[];
             grandfathers_ids?: { public_id: unknown; first_name: string; parent_name?: string }[];
@@ -935,8 +800,6 @@ export async function getIndividualDetails(publicId: string) {       // TODO add
             is_dead: i.is_dead,
             mother_id: i.mother_id ? relatedShape(i.mother_id) : undefined,
             father_id: i.father_id ? relatedShape(i.father_id) : undefined,
-            // wives_ids:      (i.wives_ids      ?? []).map(relatedShape),
-            // husbands_ids:   (i.husbands_ids   ?? []).map(relatedShape),
             siblings_ids:   (i.siblings_ids   ?? []).map(relatedShape),
             grandmothers_ids: (i.grandmothers_ids ?? []).map(relatedShape),
             grandfathers_ids: (i.grandfathers_ids ?? []).map(relatedShape),
